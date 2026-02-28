@@ -113,7 +113,4 @@ function clearAllRelatedReportActionErrors(
 }
 
 export type {IgnoreDirection};
-export {
-    // eslint-disable-next-line import/prefer-default-export
-    clearAllRelatedReportActionErrors,
-};
+export {clearAllRelatedReportActionErrors};

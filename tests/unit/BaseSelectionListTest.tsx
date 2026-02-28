@@ -95,7 +95,6 @@ describe('BaseSelectionList', () => {
         // Trigger a mouse move event to hover the item
         fireEvent(screen.getByTestId(`${CONST.BASE_LIST_ITEM_TEST_ID}8`), 'mouseMove', {stopPropagation: () => {}});
 
-        // eslint-disable-next-line testing-library/no-unnecessary-act
         act(() => {
             arrowDownCallback();
         });

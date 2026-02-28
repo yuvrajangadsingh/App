@@ -462,7 +462,6 @@ function EmptySearchViewContent({
                 }
                 break;
             // We want to display the default nothing to show message if there is any filter applied.
-            // eslint-disable-next-line no-fallthrough
             case CONST.SEARCH.DATA_TYPES.INVOICE:
                 if (!content && !hasResults) {
                     content = {
@@ -487,7 +486,6 @@ function EmptySearchViewContent({
                     };
                 }
                 break;
-            // eslint-disable-next-line no-fallthrough
             case CONST.SEARCH.DATA_TYPES.CHAT:
             default:
                 if (!content) {

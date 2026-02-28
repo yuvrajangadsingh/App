@@ -48,7 +48,6 @@ function DiscardChangesConfirmation({getHasUnsavedChanges, onCancel, isEnabled =
         // transitionStart is triggered before the previous page is fully loaded so RHP sliding animation
         // could be less "glitchy" when going back and forth between the previous and current pages
         const unsubscribe = navigation.addListener('transitionStart', ({data: {closing}}) => {
-            // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
             if (!getHasUnsavedChanges()) {
                 return;
             }

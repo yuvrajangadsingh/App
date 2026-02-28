@@ -71,7 +71,6 @@ function AddUnreportedExpenseFooter({selectedIds, report, reportToConfirm, repor
         }
 
         Navigation.dismissToSuperWideRHP();
-        // eslint-disable-next-line @typescript-eslint/no-deprecated
         InteractionManager.runAfterInteractions(() => {
             if (report && isIOUReport(report)) {
                 convertBulkTrackedExpensesToIOU({

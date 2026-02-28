@@ -69,7 +69,6 @@ const request: OnyxTypes.AnyRequest = {
 };
 
 function getMockSpans(): MockSpan[] {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return (Sentry.startInactiveSpan as jest.Mock).mock.results.map((r) => r.value as MockSpan);
 }
 

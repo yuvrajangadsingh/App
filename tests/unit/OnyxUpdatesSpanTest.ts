@@ -69,9 +69,7 @@ jest.mock('@src/libs/actions/QueuedOnyxUpdates', () => ({
     queueOnyxUpdates: jest.fn(() => Promise.resolve()),
 }));
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 const Onyx = jest.requireMock<{default: {update: jest.Mock; merge: jest.Mock; connectWithoutView: jest.Mock}}>('react-native-onyx').default;
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 const PusherUtils = jest.requireMock<{default: {triggerMultiEventHandler: jest.Mock}}>('@libs/PusherUtils').default;
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports

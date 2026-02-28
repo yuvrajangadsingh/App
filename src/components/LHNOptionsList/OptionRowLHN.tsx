@@ -195,7 +195,6 @@ function OptionRowLHN({
             needsOffscreenAlphaCompositing
         >
             <EducationalTooltip
-                // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
                 shouldRender={shouldShowProductTrainingTooltip}
                 renderTooltipContent={renderProductTrainingTooltip}
                 anchorAlignment={{

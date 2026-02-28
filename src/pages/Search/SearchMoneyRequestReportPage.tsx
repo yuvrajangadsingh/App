@@ -115,7 +115,6 @@ function SearchMoneyRequestReportPage({route}: SearchMoneyRequestPageProps) {
             return;
         }
         // Clear the URL only after we navigate away to avoid a brief Not Found flash.
-        // eslint-disable-next-line @typescript-eslint/no-deprecated
         InteractionManager.runAfterInteractions(() => {
             requestAnimationFrame(() => {
                 clearDeleteTransactionNavigateBackUrl();
@@ -124,7 +123,6 @@ function SearchMoneyRequestReportPage({route}: SearchMoneyRequestPageProps) {
     }, [isFocused, deleteTransactionNavigateBackUrl]);
 
     const snapshotReport = useMemo(() => {
-        // eslint-disable-next-line @typescript-eslint/no-deprecated
         return (snapshot?.data?.[`${ONYXKEYS.COLLECTION.REPORT}${reportIDFromRoute}`] ?? {}) as typeof report;
     }, [snapshot, reportIDFromRoute]);
 

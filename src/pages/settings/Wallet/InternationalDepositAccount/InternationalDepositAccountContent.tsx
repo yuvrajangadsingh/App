@@ -107,9 +107,15 @@ function InternationalDepositAccountContent({
         goBack(backTo?.includes(ROUTES.SETTINGS_BANK_ACCOUNT_PURPOSE));
     }, [goBack, backTo]);
 
-    const {componentToRender: SubStep, isEditing, nextScreen, prevScreen, screenIndex, moveTo, resetScreenIndex} =
-        // eslint-disable-next-line @typescript-eslint/no-deprecated
-        useSubStep<CustomSubStepProps>({bodyContent: formSteps, startFrom, onFinished: handleFinishStep, skipSteps: skippedSteps});
+    const {
+        componentToRender: SubStep,
+        isEditing,
+        nextScreen,
+        prevScreen,
+        screenIndex,
+        moveTo,
+        resetScreenIndex,
+    } = useSubStep<CustomSubStepProps>({bodyContent: formSteps, startFrom, onFinished: handleFinishStep, skipSteps: skippedSteps});
 
     const handleBackButtonPress = () => {
         if (isEditing) {
