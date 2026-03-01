@@ -294,6 +294,55 @@ describe('useNewTransactions with transactions in cache', () => {
     });
 });
 
+describe('useNewTransactions with shouldConsume=false (unfocused screen)', () => {
+    const transactionsAlreadyInReport = [
+        {transactionID: '2', amount: 200, created: '2023-10-02', currency: 'USD', reportID: 'report1', merchant: ''},
+        {transactionID: '3', amount: 300, created: '2023-10-03', currency: 'USD', reportID: 'report1', merchant: ''},
+    ];
+    const newTransaction = {transactionID: '1', amount: 100, created: '2023-10-01T00:00:00Z', currency: 'USD', reportID: 'report1', merchant: ''};
+
+    it('preserves new transaction diff when shouldConsume is false, then returns it when shouldConsume becomes true', () => {
+        // 1. Initial load with shouldConsume=true (screen focused)
+        const {rerender, result} = renderHook(
+            (props) => useNewTransactions(props.hasOnceLoadedReportActions, props.transactions, props.shouldConsume),
+            {
+                initialProps: {
+                    hasOnceLoadedReportActions: true,
+                    transactions: transactionsAlreadyInReport,
+                    shouldConsume: true,
+                },
+            },
+        );
+        expect(result.current).toEqual([]);
+
+        // 2. Screen loses focus (user navigates to FAB)
+        rerender({
+            hasOnceLoadedReportActions: true,
+            transactions: transactionsAlreadyInReport,
+            shouldConsume: false,
+        });
+        expect(result.current).toEqual([]);
+
+        // 3. New transaction arrives while screen is unfocused
+        rerender({
+            hasOnceLoadedReportActions: true,
+            transactions: [...transactionsAlreadyInReport, newTransaction],
+            shouldConsume: false,
+        });
+        // The diff is detected even while unfocused
+        expect(result.current).toEqual([newTransaction]);
+
+        // 4. Screen regains focus, diff should still be available
+        rerender({
+            hasOnceLoadedReportActions: true,
+            transactions: [...transactionsAlreadyInReport, newTransaction],
+            shouldConsume: true,
+        });
+        // The diff persists because it was never consumed while unfocused
+        expect(result.current).toEqual([newTransaction]);
+    });
+});
+
 afterAll(() => {
     jest.restoreAllMocks();
 });

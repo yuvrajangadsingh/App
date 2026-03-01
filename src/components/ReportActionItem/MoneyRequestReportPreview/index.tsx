@@ -121,9 +121,10 @@ function MoneyRequestReportPreview({
     const [hasOnceLoadedReportActions] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT_METADATA}${chatReportID}`, {
         selector: hasOnceLoadedReportActionsSelector,
     });
-    const newTransactions = useNewTransactions(hasOnceLoadedReportActions, transactions);
     const isFocused = useIsFocused();
-    // We only want to highlight the new expenses if the screen is focused.
+    // Pass isFocused so the hook won't consume the diff while the screen is unfocused.
+    // This preserves the new-transaction detection for when the user navigates back.
+    const newTransactions = useNewTransactions(hasOnceLoadedReportActions, transactions, isFocused);
     const newTransactionIDs = isFocused ? new Set(newTransactions.map((transaction) => transaction.transactionID)) : undefined;
 
     const renderItem: ListRenderItem<Transaction> = ({item}) => (
