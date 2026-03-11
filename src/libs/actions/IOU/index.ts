@@ -11064,10 +11064,14 @@ function cancelPayment(
 }
 
 /**
- * Completes onboarding for invite link flow based on the selected payment option
+ * Completes onboarding for invite link flow based on the selected payment option.
+ * Uses a synchronous flag to prevent duplicate calls within the same session,
+ * since the Onyx-based isInviteOnboardingComplete guard can race when multiple
+ * call sites fire before the first Onyx update propagates.
  *
  * @param paymentSelected based on which we choose the onboarding choice and concierge message
  */
+let hasCompletedPaymentOnboarding = false;
 function completePaymentOnboarding(
     paymentSelected: ValueOf<typeof CONST.PAYMENT_SELECTED>,
     introSelected: OnyxEntry<OnyxTypes.IntroSelected>,
@@ -11078,9 +11082,11 @@ function completePaymentOnboarding(
 ) {
     const isInviteOnboardingComplete = introSelected?.isInviteOnboardingComplete ?? false;
 
-    if (isInviteOnboardingComplete || !introSelected?.choice || !introSelected?.inviteType) {
+    if (isInviteOnboardingComplete || hasCompletedPaymentOnboarding || !introSelected?.choice || !introSelected?.inviteType) {
         return;
     }
+
+    hasCompletedPaymentOnboarding = true;
 
     const personalDetailsListValues = Object.values(getPersonalDetailsForAccountIDs(userAccountID ? [userAccountID] : [], personalDetailsList));
     const personalDetails = personalDetailsListValues.at(0);
