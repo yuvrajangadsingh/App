@@ -701,7 +701,7 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
             isEmpty(report) &&
             (isMoneyRequest(prevReport) ||
                 isMoneyRequestReport(prevReport) ||
-                isPolicyExpenseChat(prevReport) ||
+                (isPolicyExpenseChat(prevReport) && !prevReport?.isOwnPolicyExpenseChat) ||
                 isGroupChat(prevReport) ||
                 isAdminRoom(prevReport) ||
                 isAnnounceRoom(prevReport));
@@ -794,6 +794,11 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
             return;
         }
 
+        // User's own workspace chat is permanent, don't navigate away
+        if (prevReport?.isOwnPolicyExpenseChat) {
+            return;
+        }
+
         // Try to navigate to parent report if available
         if (deletedReportParentID && !isMoneyRequestReportPendingDeletion(deletedReportParentID)) {
             Navigation.isNavigationReady().then(() => {
@@ -806,7 +811,7 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
         Navigation.isNavigationReady().then(() => {
             navigateToConciergeChat(conciergeReportID, currentUserAccountID);
         });
-    }, [reportWasDeleted, isFocused, deletedReportParentID, conciergeReportID, currentUserAccountID]);
+    }, [reportWasDeleted, isFocused, deletedReportParentID, conciergeReportID, currentUserAccountID, prevReport?.isOwnPolicyExpenseChat]);
 
     useEffect(() => {
         if (!isValidReportIDFromPath(reportIDFromRoute)) {
