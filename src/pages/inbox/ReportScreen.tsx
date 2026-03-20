@@ -299,7 +299,9 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
     const screenWrapperStyle: ViewStyle[] = [styles.appContent, styles.flex1, {marginTop: viewportOffsetTop}];
     const isOptimisticDelete = report?.statusNum === CONST.REPORT.STATUS_NUM.CLOSED;
 
-    const {wasDeleted: reportWasDeleted, parentReportID: deletedReportParentID} = useReportWasDeleted(reportIDFromRoute, report, isOptimisticDelete, userLeavingStatus);
+    const {wasDeleted: reportWasDeleted, parentReportID: deletedReportParentID} = useReportWasDeleted(
+        reportIDFromRoute, report, isOptimisticDelete, userLeavingStatus, prevReport?.isOwnPolicyExpenseChat,
+    );
 
     const indexOfLinkedMessage = useMemo(
         (): number => reportActions.findIndex((obj) => reportActionIDFromRoute && String(obj.reportActionID) === String(reportActionIDFromRoute)),
@@ -710,6 +712,7 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
         const wasReportRemoved = !!prevOnyxReportID && prevOnyxReportID === reportIDFromRoute && !onyxReportID;
         const isRemovalExpectedForReportType =
             isEmpty(report) &&
+            !prevReport?.isOwnPolicyExpenseChat &&
             (isMoneyRequest(prevReport) ||
                 isMoneyRequestReport(prevReport) ||
                 isPolicyExpenseChat(prevReport) ||

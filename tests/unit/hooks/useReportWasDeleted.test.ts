@@ -308,4 +308,35 @@ describe('useReportWasDeleted', () => {
             expect(result.current.wasDeleted).toBe(true);
         });
     });
+
+    describe('own policy expense chat protection', () => {
+        it('should not set wasDeleted when isOwnPolicyExpenseChat is true (vacation delegate split scenario)', () => {
+            // Given a loaded own policy expense chat
+            const {result, rerender} = renderHook(
+                ({report, isOwnPolicyExpenseChat}) => useReportWasDeleted('123', report, false, false, isOwnPolicyExpenseChat),
+                {initialProps: {report: createReport('123', 'parent456') as Report | undefined, isOwnPolicyExpenseChat: false}},
+            );
+            expect(result.current.wasDeleted).toBe(false);
+
+            // When server SET clears the report but isOwnPolicyExpenseChat was true on prevReport
+            rerender({report: undefined, isOwnPolicyExpenseChat: true});
+
+            // Then wasDeleted stays false because own policy expense chats are not truly deleted
+            expect(result.current.wasDeleted).toBe(false);
+        });
+
+        it('should set wasDeleted when isOwnPolicyExpenseChat is false (normal deletion)', () => {
+            // Given a loaded non-own policy expense chat
+            const {result, rerender} = renderHook(
+                ({report, isOwnPolicyExpenseChat}) => useReportWasDeleted('123', report, false, false, isOwnPolicyExpenseChat),
+                {initialProps: {report: createReport('123', 'parent456') as Report | undefined, isOwnPolicyExpenseChat: false}},
+            );
+
+            // When report is deleted and it's not an own policy expense chat
+            rerender({report: undefined, isOwnPolicyExpenseChat: false});
+
+            // Then wasDeleted is true as expected for real deletions
+            expect(result.current.wasDeleted).toBe(true);
+        });
+    });
 });

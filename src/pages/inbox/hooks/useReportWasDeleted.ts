@@ -22,6 +22,7 @@ function useReportWasDeleted(
     report: OnyxEntry<OnyxTypes.Report> | undefined,
     isOptimisticDelete: boolean,
     userLeavingStatus: boolean,
+    isOwnPolicyExpenseChat = false,
 ): ReportWasDeletedResult {
     const wasEverAccessibleRef = useRef(false);
     const prevReportIDFromRouteRef = useRef(reportIDFromRoute);
@@ -53,13 +54,13 @@ function useReportWasDeleted(
     }, [currentReportID, currentParentReportID, reportIDFromRoute]);
 
     useEffect(() => {
-        if (!wasEverAccessibleRef.current || currentReportID || isOptimisticDelete || userLeavingStatus) {
+        if (!wasEverAccessibleRef.current || currentReportID || isOptimisticDelete || userLeavingStatus || isOwnPolicyExpenseChat) {
             return;
         }
         // guarded by if to prevent rerenders
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setWasDeleted(true);
-    }, [currentReportID, isOptimisticDelete, userLeavingStatus]);
+    }, [currentReportID, isOptimisticDelete, userLeavingStatus, isOwnPolicyExpenseChat]);
 
     return useMemo(() => ({wasDeleted, parentReportID}), [wasDeleted, parentReportID]);
 }
