@@ -18,7 +18,7 @@ import {getLatestErrorMessageField} from '@libs/ErrorUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import {isDisablingOrDeletingLastEnabledTag} from '@libs/OptionsListUtils';
-import {getPersonalDetailByEmail} from '@libs/PersonalDetailsUtils';
+import {getUserNameByEmail} from '@libs/PersonalDetailsUtils';
 import {
     getCleanedTagName,
     getTagApproverRule,
@@ -54,8 +54,7 @@ function TagSettingsPage({route, navigation}: TagSettingsPageProps) {
     const expensifyIcons = useMemoizedLazyExpensifyIcons(['Lock', 'Trashcan'] as const);
     const isQuickSettingsFlow = route.name === SCREENS.SETTINGS_TAGS.SETTINGS_TAG_SETTINGS;
     const tagApprover = getTagApproverRule(policy, route.params?.tagName)?.approver ?? '';
-    const approver = getPersonalDetailByEmail(tagApprover);
-    const approverText = approver?.displayName ?? tagApprover;
+    const approverText = getUserNameByEmail(tagApprover, 'displayName');
     const hasDependentTags = hasDependentTagsPolicyUtils(policy, policyTags);
     const currentPolicyTag = hasDependentTags
         ? Object.values(policyTag.tags ?? {}).find((tag) => tag?.name === tagName && tag.rules?.parentTagsFilter === parentTagsFilter)
