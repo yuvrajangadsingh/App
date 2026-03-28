@@ -528,6 +528,7 @@ function updateWorkspaceCompanyCard(domainOrWorkspaceAccountID: number, cardID: 
                     pendingFields: {
                         lastScrape: null,
                     },
+                    ...(breakConnection ? {errors: null} : {}),
                 },
             },
         },
@@ -540,6 +541,7 @@ function updateWorkspaceCompanyCard(domainOrWorkspaceAccountID: number, cardID: 
                     pendingFields: {
                         lastScrape: null,
                     },
+                    ...(breakConnection ? {errors: null} : {}),
                 },
             },
         },
