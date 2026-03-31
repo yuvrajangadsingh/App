@@ -21,7 +21,7 @@ function useIsAllowedToIssueCompanyCard({policyID}: {policyID?: string}) {
         return isPolicyAdmin;
     }
 
-    return !!adminAccess;
+    return adminAccess ?? isPolicyAdmin;
 }
 
 export default useIsAllowedToIssueCompanyCard;
