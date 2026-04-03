@@ -686,8 +686,9 @@ const validateAttachment = (file: FileObject, validationOptions?: ValidateAttach
         return validationOptions?.isValidatingMultipleFiles ? CONST.FILE_VALIDATION_ERRORS.WRONG_FILE_TYPE_MULTIPLE : CONST.FILE_VALIDATION_ERRORS.WRONG_FILE_TYPE;
     }
 
-    // Images are exempt from file size check since they will be resized
-    if (!Str.isImage(file.name ?? '') && !hasHeicOrHeifExtension(file) && (file?.size ?? 0) > maxFileSize) {
+    // Images and HEIC/HEIF are exempt from file size check only for receipts, since receipt images get resized downstream
+    const shouldSkipSizeCheck = !!validationOptions?.isValidatingReceipts && (Str.isImage(file.name ?? '') || hasHeicOrHeifExtension(file));
+    if (!shouldSkipSizeCheck && (file?.size ?? 0) > maxFileSize) {
         return validationOptions?.isValidatingMultipleFiles ? CONST.FILE_VALIDATION_ERRORS.FILE_TOO_LARGE_MULTIPLE : CONST.FILE_VALIDATION_ERRORS.FILE_TOO_LARGE;
     }
 
