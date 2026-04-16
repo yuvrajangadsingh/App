@@ -5474,7 +5474,11 @@ function deleteAppReport(
         }
 
         const originalMessage = ReportActionsUtils.getOriginalMessage(reportAction);
-        if (originalMessage?.type !== CONST.IOU.REPORT_ACTION_TYPE.CREATE && originalMessage?.type !== CONST.IOU.REPORT_ACTION_TYPE.TRACK) {
+        if (
+            originalMessage?.type !== CONST.IOU.REPORT_ACTION_TYPE.CREATE &&
+            originalMessage?.type !== CONST.IOU.REPORT_ACTION_TYPE.TRACK &&
+            originalMessage?.type !== CONST.IOU.REPORT_ACTION_TYPE.REJECT
+        ) {
             continue;
         }
 
