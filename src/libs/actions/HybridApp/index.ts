@@ -59,7 +59,11 @@ Onyx.connectWithoutView({
             return;
         }
 
+        const isInitialSessionLoad = currentSessionAccountID === undefined;
         currentSessionAccountID = nextSessionAccountID;
+        if (isInitialSessionLoad) {
+            return;
+        }
         currentTryNewDot = undefined;
         hasReceivedTryNewDotUpdate = false;
         isLoadingTryNewDot = nextSessionAccountID !== undefined || isLoadingApp !== false;
