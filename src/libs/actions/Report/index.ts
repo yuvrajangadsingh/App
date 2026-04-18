@@ -1953,23 +1953,15 @@ function createTransactionThreadReport(
  * @param shouldDismissModal Whether to dismiss the modal before navigating
  */
 function navigateToReport(reportID: string | undefined, shouldDismissModal = true) {
-    if (shouldDismissModal) {
-        Navigation.dismissModal({
-            afterTransition: () => {
-                if (!reportID) {
-                    return;
-                }
-
-                Navigation.navigate(ROUTES.REPORT_WITH_ID.getRoute(reportID));
-            },
-        });
-    } else if (reportID) {
-        Navigation.navigate(ROUTES.REPORT_WITH_ID.getRoute(reportID));
+    if (!reportID) {
+        return;
     }
-    // In some cases when RHP modal gets hidden and then we navigate to report Composer focus breaks, wrapping navigation in setTimeout fixes this
-    setTimeout(() => {
-        Navigation.isNavigationReady().then(() => Navigation.navigate(ROUTES.REPORT_WITH_ID.getRoute(reportID)));
-    }, 0);
+    const route = ROUTES.REPORT_WITH_ID.getRoute(reportID);
+    if (shouldDismissModal) {
+        Navigation.dismissModal({afterTransition: () => Navigation.navigate(route)});
+        return;
+    }
+    Navigation.navigate(route);
 }
 
 /**
