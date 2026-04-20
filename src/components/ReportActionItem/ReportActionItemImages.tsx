@@ -85,7 +85,7 @@ function ReportActionItemImages({images, size, total, isHovered = false, onPress
                     return (
                         <ImageBehaviorContextProvider
                             key={key}
-                            shouldSetAspectRatioInStyle={numberOfShownImages === 1 ? true : Str.isPDF(filename ?? '')}
+                            shouldSetAspectRatioInStyle={numberOfShownImages === 1 ? !shouldUseAspectRatio : Str.isPDF(filename ?? '')}
                         >
                             <View style={[styles.reportActionItemImage, borderStyle, hoverStyle]}>
                                 <ReportActionItemImage
