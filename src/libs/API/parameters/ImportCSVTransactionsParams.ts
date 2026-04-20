@@ -16,6 +16,9 @@ type ImportCSVTransactionsParams = {
 
     /** Mapping of transaction attributes (amount, merchant, category, date) to column names */
     columnMappings: string;
+
+    /** Whether to apply workspace coding rules to imported transactions */
+    shouldApplyCodingRules?: boolean;
 };
 
 export default ImportCSVTransactionsParams;

@@ -7,6 +7,9 @@ type ImportCSVCompanyCardsParams = {
 
     /** Stringified JSON array of imported row data */
     csvData: string;
+
+    /** Whether to apply workspace coding rules to imported transactions */
+    shouldApplyCodingRules?: boolean;
 };
 
 export default ImportCSVCompanyCardsParams;
