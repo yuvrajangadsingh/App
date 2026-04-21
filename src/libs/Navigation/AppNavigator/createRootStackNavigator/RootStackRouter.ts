@@ -15,8 +15,8 @@ import {
     handleOpenWorkspaceSplitAction,
     handlePushFullscreenAction,
     handleRemoveFullscreenUnderRHP,
+    handleReplaceFullscreenAction,
     handleReplaceFullscreenUnderRHP,
-    handleReplaceReportsSplitNavigatorAction,
     handleToggleSidePanelWithHistoryAction,
 } from './GetStateForActionHandlers';
 import syncBrowserHistory from './syncBrowserHistory';
@@ -165,8 +165,8 @@ function RootStackRouter(options: RootStackNavigatorRouterOptions) {
                 return handleRemoveFullscreenUnderRHP(state, action, configOptions, stackRouter);
             }
 
-            if (isReplaceAction(action) && action.payload.name === NAVIGATORS.REPORTS_SPLIT_NAVIGATOR) {
-                return handleReplaceReportsSplitNavigatorAction(state, action, configOptions, stackRouter);
+            if (isReplaceAction(action) && isFullScreenName(action.payload.name) && action.payload.name !== NAVIGATORS.WORKSPACE_SPLIT_NAVIGATOR) {
+                return handleReplaceFullscreenAction(state, action, configOptions, stackRouter);
             }
 
             // When navigating to a specific workspace from WorkspaceListPage there should be entering animation for its sidebar (only case where we want animation for sidebar)
@@ -186,3 +186,4 @@ function RootStackRouter(options: RootStackNavigatorRouterOptions) {
 }
 
 export default RootStackRouter;
+ackRouter;

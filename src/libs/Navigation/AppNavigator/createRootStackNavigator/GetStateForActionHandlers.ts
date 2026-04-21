@@ -169,7 +169,7 @@ function handlePushFullscreenAction(
     return stateWithNavigator;
 }
 
-function handleReplaceReportsSplitNavigatorAction(
+function handleReplaceFullscreenAction(
     state: StackNavigationState<ParamListBase>,
     action: ReplaceActionType,
     configOptions: RouterConfigOptions,
@@ -177,22 +177,26 @@ function handleReplaceReportsSplitNavigatorAction(
 ) {
     const targetScreen = action.payload?.params && 'screen' in action.payload.params ? (action.payload?.params?.screen as string) : undefined;
     const navigatorName = action.payload.name;
+    // Default StackRouter REPLACE reuses a matching preloaded route by name without applying the
+    // action's params. Strip the stale preloaded fullscreen so the router creates a fresh route
+    // with the target screen from the action. Mirrors handlePushFullscreenAction.
     const adjustedState = getStateWithFilteredPreloadedRoutes(state, navigatorName, targetScreen);
-    const stateWithReportsSplitNavigator = stackRouter.getStateForAction(adjustedState, action, configOptions);
+    const stateWithFullscreenNavigator = stackRouter.getStateForAction(adjustedState, action, configOptions);
 
-    if (!stateWithReportsSplitNavigator) {
-        Log.hmmm('[handleReplaceReportsSplitNavigatorAction] ReportsSplitNavigator has not been found in the navigation state.');
+    if (!stateWithFullscreenNavigator) {
+        Log.hmmm(`[handleReplaceFullscreenAction] ${navigatorName} has not been found in the navigation state.`);
         return null;
     }
 
-    const lastReportsSplitNavigator = stateWithReportsSplitNavigator.routes.at(-1);
-
-    // ReportScreen should always be opened with an animation when replacing the navigator
-    if (lastReportsSplitNavigator?.key) {
-        screensWithEnteringAnimation.add(lastReportsSplitNavigator.key);
+    // ReportScreen should always be opened with an animation when replacing the reports split navigator.
+    if (navigatorName === NAVIGATORS.REPORTS_SPLIT_NAVIGATOR) {
+        const lastReportsSplitNavigator = stateWithFullscreenNavigator.routes.at(-1);
+        if (lastReportsSplitNavigator?.key) {
+            screensWithEnteringAnimation.add(lastReportsSplitNavigator.key);
+        }
     }
 
-    return stateWithReportsSplitNavigator;
+    return stateWithFullscreenNavigator;
 }
 
 /**
@@ -366,7 +370,7 @@ export {
     handlePushFullscreenAction,
     handleReplaceFullscreenUnderRHP,
     handleRemoveFullscreenUnderRHP,
-    handleReplaceReportsSplitNavigatorAction,
+    handleReplaceFullscreenAction,
     screensWithEnteringAnimation,
     handleToggleSidePanelWithHistoryAction,
 };
