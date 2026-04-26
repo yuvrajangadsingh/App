@@ -178,9 +178,24 @@ function handleReplaceFullscreenAction(
     const targetScreen = action.payload?.params && 'screen' in action.payload.params ? (action.payload?.params?.screen as string) : undefined;
     const navigatorName = action.payload.name;
     // Default StackRouter REPLACE reuses a matching preloaded route by name without applying the
-    // action's params. Strip the stale preloaded fullscreen so the router creates a fresh route
-    // with the target screen from the action. Mirrors handlePushFullscreenAction.
-    const adjustedState = getStateWithFilteredPreloadedRoutes(state, navigatorName, targetScreen);
+    // action's params. Strip any preloaded route under this navigator whose `screen` does not match
+    // the REPLACE target so the router creates a fresh route with the target screen from the action.
+    // We can't reuse getStateWithFilteredPreloadedRoutes — it gates on getIsNarrowLayout(), but the
+    // REPLACE param-loss bug exists on every layout, so this filter has to run unconditionally.
+    const adjustedState = !targetScreen
+        ? state
+        : {
+              ...state,
+              preloadedRoutes:
+                  state.preloadedRoutes?.filter((preloadedRoute) => {
+                      if (preloadedRoute.name !== navigatorName) {
+                          return true;
+                      }
+                      const preloadedScreen =
+                          preloadedRoute.params && 'screen' in preloadedRoute.params ? (preloadedRoute.params.screen as string | undefined) : undefined;
+                      return preloadedScreen === targetScreen;
+                  }) ?? state.preloadedRoutes,
+          };
     const stateWithFullscreenNavigator = stackRouter.getStateForAction(adjustedState, action, configOptions);
 
     if (!stateWithFullscreenNavigator) {
