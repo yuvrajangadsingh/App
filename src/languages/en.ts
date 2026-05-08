@@ -3421,6 +3421,7 @@ const translations = {
         startGroup: 'Start group',
         addToGroup: 'Add to group',
         addUserToGroup: (username: string) => `Add ${username} to group`,
+        removeFromGroup: (username: string) => `Remove ${username} from group`,
     },
     yearPickerPage: {
         year: 'Year',

@@ -339,7 +339,7 @@ function NewChatPage({ref}: NewChatPageProps) {
                     item={item}
                     onSelectRow={toggleOption}
                     disabled={!!item.isDisabled}
-                    accessibilityLabel={item.text ? translate('selectionList.userSelected', item.text) : ''}
+                    accessibilityLabel={item.text ? translate('newChatPage.removeFromGroup', item.text) : ''}
                     style={styles.ml5}
                 />
             );

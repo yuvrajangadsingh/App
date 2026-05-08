@@ -3248,6 +3248,7 @@ ${amount} para ${merchant} - ${date}`,
         startGroup: 'Crear grupo',
         addToGroup: 'Añadir al grupo',
         addUserToGroup: (username: string) => `Añadir ${username} al grupo`,
+        removeFromGroup: (username: string) => `Eliminar ${username} del grupo`,
     },
     yearPickerPage: {
         year: 'Año',
