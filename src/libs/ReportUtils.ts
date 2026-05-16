@@ -12557,17 +12557,7 @@ function getIntegrationNameFromExportMessage(reportActions: OnyxEntry<ReportActi
 }
 
 function isExported(reportActions: OnyxEntry<ReportActions> | ReportAction[], report?: OnyxEntry<Report>): boolean {
-    // If report object is provided and has the property, use it directly
-    if (report?.isExportedToIntegration !== undefined) {
-        return report.isExportedToIntegration;
-    }
-
-    // Fallback to checking actions for backward compatibility
-    if (!reportActions) {
-        return false;
-    }
-
-    const reportActionList = Array.isArray(reportActions) ? reportActions : Object.values(reportActions);
+    const reportActionList = reportActions ? (Array.isArray(reportActions) ? reportActions : Object.values(reportActions)) : [];
 
     // Actions that reset the approval state and invalidate previous exports
     const resetApprovalActionTypes = new Set<string>([
@@ -12584,10 +12574,8 @@ function isExported(reportActions: OnyxEntry<ReportActions> | ReportAction[], re
     let lastSuccessfulExportCreated = '';
 
     for (const action of reportActionList) {
-        if (resetApprovalActionTypes.has(action.actionName)) {
-            if (action.created > lastResetCreated) {
-                lastResetCreated = action.created;
-            }
+        if (resetApprovalActionTypes.has(action.actionName) && action.created > lastResetCreated) {
+            lastResetCreated = action.created;
         }
         if (isExportIntegrationAction(action)) {
             const originalMessage = getOriginalMessage(action);
@@ -12601,7 +12589,9 @@ function isExported(reportActions: OnyxEntry<ReportActions> | ReportAction[], re
         }
     }
 
-    return lastSuccessfulExportCreated > lastResetCreated;
+    const exportedFromActions = !!lastSuccessfulExportCreated && lastSuccessfulExportCreated > lastResetCreated;
+
+    return exportedFromActions || report?.isExportedToIntegration === true;
 }
 
 function hasExportError(reportActions: OnyxEntry<ReportActions> | ReportAction[], report?: OnyxEntry<Report>) {
