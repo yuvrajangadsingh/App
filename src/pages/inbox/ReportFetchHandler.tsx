@@ -109,7 +109,7 @@ function ReportFetchHandler() {
     const isOnboardingCompleted = onboarding?.hasCompletedGuidedSetupFlow ?? false;
 
     const fetchReport = useEffectEvent(() => {
-        if (reportMetadata.isOptimisticReport && report?.type === CONST.REPORT.TYPE.CHAT && !isPolicyExpenseChat(report)) {
+        if (reportMetadata.isOptimisticReport && (report?.type === CONST.REPORT.TYPE.CHAT || isTaskReport(report)) && !isPolicyExpenseChat(report)) {
             return;
         }
 
