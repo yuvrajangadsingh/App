@@ -363,7 +363,7 @@ function openReportFromDeepLink(
                             }
                         };
 
-                        if (isAnonymousUser()) {
+                        if (isAnonymousUser() || !isAuthenticated) {
                             handleDeeplinkNavigation();
                         }
                     });
