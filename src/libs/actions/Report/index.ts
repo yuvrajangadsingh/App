@@ -4474,6 +4474,11 @@ function toggleEmojiReaction(
         return;
     }
 
+    // User has a different skin tone reaction for this emoji already; remove it before adding the new one.
+    if (!ignoreSkinToneOnCompare && existingReactionObject && EmojiUtils.hasAccountIDEmojiReacted(currentUserAccountID, existingReactionObject.users)) {
+        removeEmojiReaction(originalReportID, reportAction.reportActionID, emoji, currentUserAccountID);
+    }
+
     addEmojiReaction(originalReportID, reportAction.reportActionID, emoji, skinTone, currentUserAccountID);
 }
 
