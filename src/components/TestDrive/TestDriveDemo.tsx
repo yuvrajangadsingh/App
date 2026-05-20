@@ -110,9 +110,12 @@ function TestDriveDemo() {
                 Log.hmmm('[AdminTestDriveModal] User was redirected to Workspace Editor, skipping navigation to admin room');
                 return;
             }
-            if (isAdminRoom(onboardingReport)) {
-                Navigation.navigate(ROUTES.REPORT_WITH_ID.getRoute(onboardingReport?.reportID));
-            }
+
+            Navigation.setNavigationActionToMicrotaskQueue(() => {
+                if (isAdminRoom(onboardingReport)) {
+                    Navigation.navigate(ROUTES.REPORT_WITH_ID.getRoute(onboardingReport?.reportID));
+                }
+            });
         });
     }, [onboardingReport]);
 
