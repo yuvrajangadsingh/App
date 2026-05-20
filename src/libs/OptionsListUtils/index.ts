@@ -2018,6 +2018,7 @@ function getUserToInviteContactOption({
     countryCode = CONST.DEFAULT_COUNTRY_CODE,
     loginList = {},
     currentUserEmail,
+    personalDetails,
 }: GetUserToInviteConfig): SearchOption<PersonalDetails> | null {
     // If email is provided, use it as the primary identifier
 
@@ -2050,13 +2051,18 @@ function getUserToInviteContactOption({
     // Generates an optimistic account ID for new users not yet saved in Onyx
     const optimisticAccountID = generateAccountID(login);
 
+    // If this login already exists in Onyx, use the real accountID so the device contact
+    // option doesn't produce a duplicate entry that loses the sort ordering race
+    const existingPersonalDetail = personalDetails ? Object.values(personalDetails).find((pd) => pd?.login === login) : undefined;
+    const resolvedAccountID = existingPersonalDetail?.accountID ?? optimisticAccountID;
+
     // Construct display name if firstName/lastName are provided
 
     const displayName = firstName && lastName ? `${firstName} ${lastName}` : firstName || lastName || effectiveSearchValue;
 
     // Create the base user details that will be used in both item and participantsList
     const userDetails = {
-        accountID: optimisticAccountID,
+        accountID: resolvedAccountID,
 
         avatar: avatar || FallbackAvatar,
         firstName: firstName ?? '',
