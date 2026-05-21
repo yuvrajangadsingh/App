@@ -318,6 +318,17 @@ jobs:
         if: steps.upload-dsym.outcome == 'failure'
         run: echo "::error::Failed to upload dSYM artifact – symbolication data may be missing for this build"
 
+      - name: Upload dSYMs to Sentry for crash symbolication
+        if: steps.zip-dsyms.outputs.DSYM_PATH != ''
+        continue-on-error: true
+        timeout-minutes: 10
+        run: |
+          npx sentry-cli debug-files upload \
+            --org expensify --project app \
+            "${{ steps.zip-dsyms.outputs.DSYM_PATH }}"
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
       - name: Upload iOS sourcemap artifact
         # v6
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
