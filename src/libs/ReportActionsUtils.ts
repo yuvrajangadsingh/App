@@ -194,7 +194,7 @@ function isCreatedAction(reportAction: OnyxInputOrEntry<ReportAction>): boolean 
 }
 
 function isDeletedAction(reportAction: OnyxInputOrEntry<ReportAction | OptimisticIOUReportAction>): boolean {
-    if (isInviteOrRemovedAction(reportAction) || isActionableMentionWhisper(reportAction) || isActionableCardFraudAlert(reportAction)) {
+    if (isInviteOrRemovedAction(reportAction) || isActionableMentionWhisper(reportAction) || isActionableCardFraudAlert(reportAction) || isActionableMentionInviteToSubmitExpenseConfirmWhisper(reportAction)) {
         return false;
     }
 
@@ -1365,7 +1365,8 @@ function isReportActionVisibleAsLastAction(
 
     return (
         (!(isWhisperAction(reportAction) && !isReportPreviewAction(reportAction) && !isMoneyRequestAction(reportAction) && !isModifiedExpenseAction(reportAction)) ||
-            isActionableMentionWhisper(reportAction)) &&
+            isActionableMentionWhisper(reportAction) ||
+            isActionableMentionInviteToSubmitExpenseConfirmWhisper(reportAction)) &&
         isReportActionVisible(reportAction, actionReportID, canUserPerformWriteAction, visibleReportActions) &&
         reportAction.actionName !== CONST.REPORT.ACTIONS.TYPE.CREATED &&
         reportAction.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE
