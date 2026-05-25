@@ -668,10 +668,14 @@ function ReportActionsList({
             reportScrollManager.scrollToBottom();
             return;
         }
-        reportScrollManager.scrollToBottom();
+        if (unreadMarkerReportActionIndex !== -1) {
+            reportScrollManager.scrollToIndex(unreadMarkerReportActionIndex);
+        } else {
+            reportScrollManager.scrollToBottom();
+        }
         readActionSkipped.current = false;
         readNewestAction(report.reportID, !!reportLoadingState?.hasOnceLoadedReportActions);
-    }, [setIsFloatingMessageCounterVisible, hasNewestReportAction, reportScrollManager, report.reportID, backTo, introSelected, reportLoadingState?.hasOnceLoadedReportActions, betas]);
+    }, [setIsFloatingMessageCounterVisible, hasNewestReportAction, unreadMarkerReportActionIndex, reportScrollManager, report.reportID, backTo, introSelected, reportLoadingState?.hasOnceLoadedReportActions, betas]);
 
     /**
      * Calculates the ideal number of report actions to render in the first render, based on the screen height and on
