@@ -2506,7 +2506,7 @@ function getValidOptions(
                     !report.private_isArchived
                 ) {
                     const participant = report.item?.participants?.[currentUserAccountID];
-                    if (participant && isHiddenForCurrentUser(participant.notificationPreference)) {
+                    if (participant && isHiddenForCurrentUser(participant.notificationPreference) && !(report.isChatRoom && searchTerms.length > 0)) {
                         return false;
                     }
                 }
