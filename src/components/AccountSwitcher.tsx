@@ -169,6 +169,7 @@ function AccountSwitcher({isScreenFocused}: AccountSwitcherProps) {
 
             return [
                 createBaseMenuItem(delegatePersonalDetails, error, {
+                    shouldCallAfterModalHide: true,
                     onSelected: () => {
                         if (isOffline) {
                             close(showOfflineModal);
@@ -195,6 +196,7 @@ function AccountSwitcher({isScreenFocused}: AccountSwitcherProps) {
                     const error = getLatestError(errorFields?.connect?.[email]);
                     const personalDetails = getPersonalDetailByEmail(email);
                     return createBaseMenuItem(personalDetails, error, {
+                        shouldCallAfterModalHide: true,
                         badgeText: translate('delegate.role', {role}),
                         onSelected: () => {
                             if (isOffline) {
