@@ -243,7 +243,9 @@ function ReportParticipantsPage({report, route}: ReportParticipantsPageProps) {
             isDisabled,
             text: formatPhoneNumber(getDisplayNameOrDefault(details)),
             alternateText: formatPhoneNumber(details?.login ?? ''),
-            rightElement: isAdmin ? <Badge text={translate('common.admin')} /> : null,
+            rightElement: isGroupChat ? (
+                <View style={StyleUtils.getMinimumWidth(60)}>{isAdmin && <Badge text={translate('common.admin')} />}</View>
+            ) : null,
             pendingAction,
             icons: [
                 {
