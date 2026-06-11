@@ -69,6 +69,15 @@ function replaceOptimisticReportWithActualReport(report: Report, draftReportComm
             [parentReportActionID]: null,
         });
         Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT}${reportID}`, null);
+        InteractionManager.runAfterInteractions(() => {
+            if (!navigationRef.isReady()) {
+                return;
+            }
+            const superWideRoute = Navigation.getSuperWideRHPRoute();
+            if (superWideRoute?.reportID === reportID) {
+                Navigation.setParams({reportID: preexistingReportID.toString()}, superWideRoute.key ?? '');
+            }
+        });
         return;
     }
 

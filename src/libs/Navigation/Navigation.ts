@@ -811,6 +811,32 @@ function getTopmostSuperWideRHPReportID(state: NavigationState = navigationRef.g
 }
 
 /**
+ * Get the super wide RHP route including its key, searching past any root-stack screens
+ * (e.g. TRANSACTION_RECEIPT) that may be sitting above the RightModalNavigator.
+ */
+function getSuperWideRHPRoute(state: NavigationState = navigationRef.getRootState()): {reportID: string; key: string | undefined} | undefined {
+    if (!state) {
+        return;
+    }
+    const rightModalNavigator = state.routes?.findLast((route) => route.name === NAVIGATORS.RIGHT_MODAL_NAVIGATOR);
+    if (!rightModalNavigator) {
+        return;
+    }
+    const superWideRoute = rightModalNavigator.state?.routes.findLast((route) => SUPER_WIDE_RIGHT_MODALS.has(route.name));
+    if (!superWideRoute) {
+        return;
+    }
+    const params = superWideRoute.params as
+        | RightModalNavigatorParamList[typeof SCREENS.RIGHT_MODAL.SEARCH_MONEY_REQUEST_REPORT]
+        | RightModalNavigatorParamList[typeof SCREENS.RIGHT_MODAL.EXPENSE_REPORT]
+        | undefined;
+    if (!params?.reportID) {
+        return;
+    }
+    return {reportID: params.reportID, key: superWideRoute.key};
+}
+
+/**
  * Closes the modal navigator (RHP, onboarding).
  *
  * @param options - Configuration object
@@ -1262,6 +1288,7 @@ export default {
     getTopmostSearchReportID,
     getTopmostSuperWideRHPReportParams,
     getTopmostSuperWideRHPReportID,
+    getSuperWideRHPRoute,
     getTopmostSearchReportRouteParams,
     navigateBackToLastSuperWideRHPScreen,
 };
