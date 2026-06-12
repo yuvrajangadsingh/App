@@ -1,4 +1,4 @@
-import React, {memo} from 'react';
+import React, {memo, useEffect, useState} from 'react';
 import type {CustomRendererProps, TBlock} from 'react-native-render-html';
 import {AttachmentContext} from '@components/AttachmentContext';
 import {getButtonRole} from '@components/Button/utils';
@@ -11,6 +11,7 @@ import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
+import {getCachedAttachment} from '@libs/actions/Attachment';
 import {getFileName, getFileType, splitExtensionFromFileName} from '@libs/fileDownload/FileUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import tryResolveUrlFromApiRoot from '@libs/tryResolveUrlFromApiRoot';
@@ -59,6 +60,17 @@ function ImageRenderer({tnode}: CustomRendererProps<TBlock>) {
     const processedPreviewSource = typeof previewSource === 'string' ? previewSource.replaceAll(/\.png\.(1024|320)\.jpg$/g, '.png') : previewSource;
     const source = tryResolveUrlFromApiRoot(isAttachmentOrReceipt ? attachmentSourceAttribute : htmlAttribs.src);
 
+    const [attachmentRecord] = useOnyx(`${ONYXKEYS.COLLECTION.ATTACHMENT}${attachmentID}`);
+    const isLocalSource = CONST.ATTACHMENT_LOCAL_URL_PREFIX.some((p) => typeof source === 'string' && source.startsWith(p));
+    const [resolvedSource, setResolvedSource] = useState<string | null>(null);
+    useEffect(() => {
+        if (!attachmentID || !isLocalSource) {
+            setResolvedSource(null);
+            return;
+        }
+        getCachedAttachment({attachmentID, attachment: attachmentRecord, currentSource: String(source)}).then(setResolvedSource);
+    }, [attachmentID, source, isLocalSource, attachmentRecord]);
+
     const alt = htmlAttribs.alt;
     const imageWidth = (htmlAttribs['data-expensify-width'] && parseInt(htmlAttribs['data-expensify-width'], 10)) || undefined;
     const imageHeight = (htmlAttribs['data-expensify-height'] && parseInt(htmlAttribs['data-expensify-height'], 10)) || undefined;
@@ -76,7 +88,7 @@ function ImageRenderer({tnode}: CustomRendererProps<TBlock>) {
 
     const thumbnailImageComponent = (
         <ThumbnailImage
-            previewSourceURL={processedPreviewSource}
+            previewSourceURL={resolvedSource ?? processedPreviewSource}
             style={styles.webViewStyles.tagStyles.img}
             isAuthTokenRequired={isAttachmentOrReceipt}
             fallbackIcon={fallbackIcon}
@@ -110,7 +122,7 @@ function ImageRenderer({tnode}: CustomRendererProps<TBlock>) {
                             reportID,
                             reportActionID: action?.reportActionID,
                             type,
-                            source,
+                            source: resolvedSource ?? source,
                             accountID,
                             isAuthTokenRequired: isAttachmentOrReceipt,
                             originalFileName: fileName,
