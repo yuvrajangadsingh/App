@@ -76,7 +76,7 @@ describe('TryNewDotUtils', () => {
             },
         } as unknown as TryNewDot;
 
-        expect(isOldAppRedirectBlocked(tryNewDot, false)).toBe(true);
+        expect(isOldAppRedirectBlocked(tryNewDot, false)).toBe(false);
     });
 
     it('still shows the OldDot redirect when the classicRedirect nudge is fresh', () => {
