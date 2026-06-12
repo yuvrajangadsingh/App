@@ -1127,7 +1127,13 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
             const includeReportLevelExport = ((isExpenseReportType || typeInvoice) && areFullReportsSelected) || (typeExpense && !isExpenseReportType && isAllOneTransactionReport);
 
             const policy = selectedPolicyIDs.length === 1 ? policies?.[`${ONYXKEYS.COLLECTION.POLICY}${selectedPolicyIDs.at(0)}`] : undefined;
-            const exportTemplates = getExportTemplates(integrationsExportTemplates ?? [], csvExportLayouts ?? {}, translate, policy, includeReportLevelExport);
+            const accountTemplates = getExportTemplates(integrationsExportTemplates ?? [], csvExportLayouts ?? {}, translate, undefined, includeReportLevelExport);
+            const policyTemplates = selectedPolicyIDs.flatMap((id) => {
+                const p = policies?.[`${ONYXKEYS.COLLECTION.POLICY}${id}`];
+                return p ? getExportTemplates([], {}, translate, p, false) : [];
+            });
+            const seen = new Set<string>();
+            const exportTemplates = [...accountTemplates, ...policyTemplates].filter((t) => !seen.has(t.templateName) && seen.add(t.templateName));
 
             const exportOptions: PopoverMenuItem[] = [];
 
