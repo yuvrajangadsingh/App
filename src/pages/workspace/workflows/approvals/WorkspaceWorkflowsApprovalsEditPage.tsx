@@ -23,7 +23,7 @@ import {convertPolicyEmployeesToApprovalWorkflows, mergeWorkflowMembersWithAvail
 import AccessOrNotFoundWrapper from '@pages/workspace/AccessOrNotFoundWrapper';
 import withPolicyAndFullscreenLoading from '@pages/workspace/withPolicyAndFullscreenLoading';
 import type {WithPolicyAndFullscreenLoadingProps} from '@pages/workspace/withPolicyAndFullscreenLoading';
-import {clearApprovalWorkflow, queueDeferredAgentWorkflowSave, removeApprovalWorkflow, setApprovalWorkflow, updateApprovalWorkflow, validateApprovalWorkflow} from '@userActions/Workflow';
+import {buildDeferredAgentWorkflowSaveKey, clearApprovalWorkflow, queueDeferredAgentWorkflowSave, removeApprovalWorkflow, setApprovalWorkflow, updateApprovalWorkflow, validateApprovalWorkflow} from '@userActions/Workflow';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type SCREENS from '@src/SCREENS';
@@ -40,6 +40,7 @@ function WorkspaceWorkflowsApprovalsEditPage({policy, isLoadingReportData = true
     const {translate, localeCompare} = useLocalize();
     const [personalDetails] = useOnyx(ONYXKEYS.PERSONAL_DETAILS_LIST);
     const [approvalWorkflow] = useOnyx(ONYXKEYS.APPROVAL_WORKFLOW);
+    const [deferredAgentWorkflowSaves] = useOnyx(ONYXKEYS.DEFERRED_AGENT_WORKFLOW_SAVES);
     const [agentPrompts] = useOnyx(ONYXKEYS.COLLECTION.SHARED_NVP_AGENT_PROMPT);
     const [optimisticAgentAccountIDMapping] = useOnyx(ONYXKEYS.OPTIMISTIC_AGENT_ACCOUNT_ID_MAPPING);
     const currentUserPersonalDetails = useCurrentUserPersonalDetails();
@@ -131,10 +132,14 @@ function WorkspaceWorkflowsApprovalsEditPage({policy, isLoadingReportData = true
             currentUserLogin: currentUserPersonalDetails?.login,
         });
 
+        const serverWorkflow = result.approvalWorkflows.find((workflow) => workflow.approvers.at(0)?.email === firstApprover);
+        const deferredKey = buildDeferredAgentWorkflowSaveKey(route.params.policyID, firstApprover);
+        const deferredEntry = deferredAgentWorkflowSaves?.[deferredKey];
         return {
             defaultWorkflowMembers: result.availableMembers,
             usedApproverEmails: result.usedApproverEmails,
-            currentApprovalWorkflow: result.approvalWorkflows.find((workflow) => workflow.approvers.at(0)?.email === firstApprover),
+            currentApprovalWorkflow:
+                deferredEntry && serverWorkflow ? {...serverWorkflow, approvers: deferredEntry.approvalWorkflow.approvers.filter((a): a is Approver => !!a)} : serverWorkflow,
         };
     };
 
