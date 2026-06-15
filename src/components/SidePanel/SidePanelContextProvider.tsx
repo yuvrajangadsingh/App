@@ -9,6 +9,7 @@ import useSidePanelDisplayStatus from '@hooks/useSidePanelDisplayStatus';
 import useWindowDimensions from '@hooks/useWindowDimensions';
 import SidePanelActions from '@libs/actions/SidePanel';
 import DateUtils from '@libs/DateUtils';
+import {getDBTimeAtServerClock} from '@libs/NetworkState';
 import focusComposerWithDelay from '@libs/focusComposerWithDelay';
 import {canEditWorkspaceSettings, shouldShowPolicy} from '@libs/PolicyUtils';
 import ReportActionComposeFocusManager from '@libs/ReportActionComposeFocusManager';
@@ -96,7 +97,7 @@ function SidePanelContextProvider({children}: PropsWithChildren) {
         if (shouldHideSidePanel) {
             setSessionStartTime(null);
         } else if (!sessionStartTime) {
-            setSessionStartTime(DateUtils.getDBTime());
+            setSessionStartTime(getDBTimeAtServerClock());
         }
     }
 
@@ -138,7 +139,7 @@ function SidePanelContextProvider({children}: PropsWithChildren) {
     };
 
     const openSidePanel = () => {
-        setSessionStartTime(DateUtils.getDBTime());
+        setSessionStartTime(getDBTimeAtServerClock());
         SidePanelActions.openSidePanel(!isExtraLargeScreenWidth);
     };
 

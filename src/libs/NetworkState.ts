@@ -223,6 +223,14 @@ function getDBTimeWithSkew(timestamp: string | number = ''): string {
     return formatDBTime(datetime);
 }
 
+/**
+ * Returns the current time adjusted by networkTimeSkew in both directions,
+ * so the result matches the server clock regardless of whether the client is ahead or behind.
+ */
+function getDBTimeAtServerClock(): string {
+    return formatDBTime(new Date(Date.now() + networkTimeSkew));
+}
+
 // --- Poor connection simulation ---
 
 let poorConnectionTimerID: NodeJS.Timeout | undefined;
@@ -434,6 +442,7 @@ export {
     setForceOffline,
     setFailAllRequests,
     getDBTimeWithSkew,
+    getDBTimeAtServerClock,
     refresh,
     simulatePoorConnection,
 };
