@@ -172,7 +172,7 @@ describe('useAdvancedSearchFilters', () => {
             });
         });
 
-        it('shows tag filter when tags are enabled even if no tags exist (singlePolicyCondition is always truthy)', async () => {
+        it('hides tag filter when tags are enabled but no tag values exist', async () => {
             const policy = buildPolicy(1, {areTagsEnabled: true});
             await Onyx.merge(`${ONYXKEYS.COLLECTION.POLICY}1`, policy);
 
@@ -188,10 +188,9 @@ describe('useAdvancedSearchFilters', () => {
 
             const {result} = renderHook(() => useAdvancedSearchFilters(), {wrapper});
 
-            // Tag filter is visible because singlePolicyCondition (!!selectedPolicyTagLists) is always true
             await waitFor(() => {
                 const allKeys = result.current.typeFiltersKeys.flat();
-                expect(allKeys).toContain(CONST.SEARCH.SYNTAX_FILTER_KEYS.TAG);
+                expect(allKeys).not.toContain(CONST.SEARCH.SYNTAX_FILTER_KEYS.TAG);
             });
         });
     });
