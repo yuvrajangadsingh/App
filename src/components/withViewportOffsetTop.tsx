@@ -13,13 +13,15 @@ type ViewportOffsetTopProps = {
 
 export default function withViewportOffsetTop<TProps extends ViewportOffsetTopProps>(WrappedComponent: ComponentType<TProps>) {
     function WithViewportOffsetTop(props: Omit<TProps, keyof ViewportOffsetTopProps>) {
-        const [viewportOffsetTop, setViewportOffsetTop] = useState(0);
+        const [viewportOffsetTop, setViewportOffsetTop] = useState(() => window.visualViewport?.offsetTop ?? 0);
 
         useEffect(() => {
             const updateDimensions = (event: Event) => {
                 const targetOffsetTop = (event.target instanceof VisualViewport && event.target.offsetTop) || 0;
                 setViewportOffsetTop(targetOffsetTop);
             };
+
+            setViewportOffsetTop(window.visualViewport?.offsetTop ?? 0);
 
             const removeViewportResizeListener = addViewportResizeListener(updateDimensions);
 
