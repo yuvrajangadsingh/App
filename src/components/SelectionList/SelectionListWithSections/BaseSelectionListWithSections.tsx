@@ -27,7 +27,7 @@ import type {ValueOf} from 'type-fest';
 
 import {useIsFocused} from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
-import React, {useCallback, useImperativeHandle, useRef} from 'react';
+import React, {useCallback, useEffect, useImperativeHandle, useRef} from 'react';
 import {View} from 'react-native';
 
 import type {FlattenedItem, ListItem, SelectionListWithSectionsProps} from './types';
@@ -99,6 +99,12 @@ function BaseSelectionListWithSectionsImpl({
 
     const {flattenedData, disabledIndexes, itemsCount, selectedItems, initialFocusedIndex, firstFocusableIndex} = useFlattenedSections(sections, initiallyFocusedItemKey);
     const listRef = useRef<FlashListRef<FlattenedItem<ListItem>> | null>(null);
+    // Focus pinned by a pointer selection (selectRow's shouldUpdateFocusedIndex path). isKeyboardNavigating
+    // is a one-way latch: it is only ever set to true, on Tab or an arrow key, and never reset. So it cannot
+    // tell "the user is driving with the keyboard right now" from "the user pressed Tab once an hour ago and
+    // has been clicking since". This ref tracks the LAST interaction instead, and any focus move that did not
+    // come from the click pin clears it again.
+    const clickPinnedFocusIndex = useRef<number | null>(null);
     const {scrollToIndex, debouncedScrollToIndex} = useSelectionListScroll(listRef, flattenedData);
     const {containerRef, trackScrollOffset, scrollInputIntoView} = useScrollToFocusedInput(listRef, isKeyboardShown);
 
@@ -144,6 +150,7 @@ function BaseSelectionListWithSectionsImpl({
         }
         if (shouldUpdateFocusedIndex && typeof indexToFocus === 'number') {
             setFocusedIndex(indexToFocus);
+            clickPinnedFocusIndex.current = indexToFocus;
         }
         onSelectRow(item);
 
@@ -152,8 +159,30 @@ function BaseSelectionListWithSectionsImpl({
         }
     };
 
+    // Arrow navigation or a search-driven re-home moves focus without going through the click pin,
+    // which means the user is no longer in pointer mode and the pin is stale.
+    useEffect(() => {
+        if (clickPinnedFocusIndex.current === null || clickPinnedFocusIndex.current === focusedIndex) {
+            return;
+        }
+        clickPinnedFocusIndex.current = null;
+    }, [focusedIndex]);
+
     const selectFocusedItem = () => {
         const focusedItem = getFocusedItem();
+
+        // Plain Enter confirms only when the user is not keyboard-driving the focused row: either no row is
+        // focused, or the focused row is a leftover pin from a pointer selection. Keyboard navigation keeps
+        // today's select/deselect behaviour, and a typed query falls through so Enter still toggles the first
+        // result.
+        const isSearchIdle = !(searchValueForFocusSync ?? textInputOptions?.value)?.trim();
+        const isFocusClickPinned = focusedIndex >= 0 && clickPinnedFocusIndex.current === focusedIndex;
+        const isFocusKeyboardDriven = focusedIndex >= 0 && !isFocusClickPinned;
+        if (canSelectMultiple && isSearchIdle && !isFocusKeyboardDriven && selectedItems.length > 0 && confirmButtonOptions?.onConfirm && !confirmButtonOptions?.isDisabled) {
+            confirmButtonOptions.onConfirm();
+            return;
+        }
+
         if (!focusedItem || focusedItem.isInteractive === false) {
             return;
         }
