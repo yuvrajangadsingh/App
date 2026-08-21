@@ -2342,7 +2342,7 @@ const staticStyles = (theme: ThemeColors) =>
                 verticalAlign: 'middle',
                 ...(Platform.OS === 'android' && {
                     height: undefined,
-                    lineHeight: undefined,
+                    lineHeight: variables.lineHeightXLarge,
                     flexGrow: 1,
                     flexShrink: 1,
                 }),
