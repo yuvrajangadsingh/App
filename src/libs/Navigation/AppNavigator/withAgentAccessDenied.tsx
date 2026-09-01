@@ -7,7 +7,15 @@ import Navigation from '@libs/Navigation/Navigation';
 import ROUTES from '@src/ROUTES';
 
 import {useFocusEffect, useIsFocused} from '@react-navigation/native';
-import React, {useCallback, useEffect} from 'react';
+import React, {useCallback, useEffect, useRef} from 'react';
+
+// Shared by every guarded screen. Two of them can be mounted at once (the Agents central pane under the
+// agent-edit RHP) and both fire redirectAgentAway when the session flips to an agent. dismissModal dispatches
+// DISMISS_MODAL synchronously, so by the time the second instance's continuation runs there is no modal on top
+// any more and it navigates to Profile right away, while the RHP is still animating out. With Profile already
+// active, the dismissing RHP re-renders with shouldRedirect false and paints the access-denied view for the
+// length of the exit animation. Only one instance may own the redirect at a time.
+let isAgentRedirectInFlight = false;
 
 function withAgentAccessDenied(getComponent: () => React.ComponentType): () => React.ComponentType {
     let ProtectedComponent: React.ComponentType | undefined;
@@ -17,26 +25,44 @@ function withAgentAccessDenied(getComponent: () => React.ComponentType): () => R
             ProtectedComponent = (props) => {
                 const isAgent = useIsAgentAccount();
                 const isFocused = useIsFocused();
+                const ownsRedirectRef = useRef(false);
                 const isAlreadyOnRedirectTarget = Navigation.isActiveRoute(ROUTES.SETTINGS_PROFILE.route);
                 const shouldRedirect = isAgent === true && !isAlreadyOnRedirectTarget;
 
-                const redirectAgentAway = useCallback(() => {
-                    if (isAgent !== true) {
+                const releaseRedirect = useCallback(() => {
+                    if (!ownsRedirectRef.current) {
                         return;
                     }
+                    ownsRedirectRef.current = false;
+                    isAgentRedirectInFlight = false;
+                }, []);
+
+                const redirectAgentAway = useCallback(() => {
+                    if (isAgent !== true || isAgentRedirectInFlight) {
+                        return;
+                    }
+
+                    // Claim the redirect before awaiting readiness so a sibling guarded screen whose effect runs in
+                    // the same tick sees the claim and stays out.
+                    isAgentRedirectInFlight = true;
+                    ownsRedirectRef.current = true;
 
                     // On a cold deep-link the effect can run before the NavigationContainer is ready, so the
                     // redirect is silently dropped and leaves a blank central pane. Wait for readiness before
                     // reading navigation state or dispatching.
                     Navigation.isNavigationReady().then(() => {
                         if (Navigation.isActiveRoute(ROUTES.SETTINGS_PROFILE.route)) {
+                            releaseRedirect();
                             return;
                         }
 
                         // forceReplace REPLACEs the stale guarded central-pane route instead of PUSHing Profile on
                         // top of it, so back from Profile pops to the unguarded Account sidebar rather than the
                         // guarded route that would re-fire this redirect.
-                        const redirectToProfile = () => Navigation.navigate(ROUTES.SETTINGS_PROFILE.getRoute(), {forceReplace: true});
+                        const redirectToProfile = () => {
+                            releaseRedirect();
+                            Navigation.navigate(ROUTES.SETTINGS_PROFILE.getRoute(), {forceReplace: true});
+                        };
 
                         // The guarded screen can be open inside a modal/RHP (e.g. the agent-edit page the owner was
                         // on when they tapped "Copilot into account"), or an unguarded RHP (e.g. the agent DM) can be
@@ -52,7 +78,7 @@ function withAgentAccessDenied(getComponent: () => React.ComponentType): () => R
 
                         redirectToProfile();
                     });
-                }, [isAgent]);
+                }, [isAgent, releaseRedirect]);
 
                 // Redirect on every focus (not just the initial transition from false to true) so navigating back
                 // onto a guarded screen that the split navigator keeps mounted (e.g. a stale agents route
@@ -72,6 +98,10 @@ function withAgentAccessDenied(getComponent: () => React.ComponentType): () => R
                     }
                     redirectAgentAway();
                 }, [isFocused, redirectAgentAway]);
+
+                // If the owning screen unmounts before its redirect completes (the RHP finishes closing before
+                // afterTransition fires), drop the claim so a later agent transition can redirect again.
+                useEffect(() => releaseRedirect, [releaseRedirect]);
 
                 if (isAgent === undefined || shouldRedirect) {
                     return null;
