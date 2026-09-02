@@ -286,7 +286,11 @@ function ComposerWithSuggestions({
     });
 
     // Save the draft of the report action. This debounced so that we're not ceaselessly saving your edit.
-    const {saveDraft: debouncedSaveReportActionDraft, isSavePending: isDraftSavePending, cancelSaveDraft: cancelSaveReportActionDraft} = useDebouncedSaveDraft(saveReportActionDraft);
+    const {
+        saveDraft: debouncedSaveReportActionDraft,
+        isSavePending: isDraftSavePending,
+        cancelSaveDraft: cancelSaveReportActionDraft,
+    } = useDebouncedSaveDraft(saveReportActionDraft, undefined, true);
 
     // Save the draft of the report comment. This debounced so that we're not ceaselessly saving your edit. Saving the draft
     // allows one to navigate somewhere else and come back to the comment and still have it in edit mode.
