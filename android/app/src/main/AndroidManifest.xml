@@ -135,6 +135,7 @@
                 <data android:mimeType="application/rtf" />
                 <data android:mimeType="application/zip" />
                 <data android:mimeType="application/txt" />
+                <data android:mimeType="application/octet-stream" />
                 <data android:mimeType="message/rfc822" />
 
                 <!-- Text / HTML -->
