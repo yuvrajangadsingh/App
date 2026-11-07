@@ -1,0 +1,14 @@
+diff --git a/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/views/modal/ReactModalHostView.kt b/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/views/modal/ReactModalHostView.kt
+--- a/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/views/modal/ReactModalHostView.kt
++++ b/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/views/modal/ReactModalHostView.kt
+@@ -353,4 +353,10 @@ public class ReactModalHostView(context: ThemedReactContext) :
+       }
+       window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+       (context as ThemedReactContext).onExtraWindowCreate(window)
++      // StatusBarModule.onExtraWindowCreate() shows the status bar on the new window, and with the
++      // edge-to-edge feature flag off that fits the dialog under the system bars again, undoing the
++      // enableEdgeToEdge() that updateProperties() applied above. Lay the dialog out edge-to-edge again.
++      if (navigationBarTranslucent && !isEdgeToEdgeFeatureFlagOn) {
++        updateProperties()
++      }
+     }

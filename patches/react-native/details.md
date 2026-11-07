@@ -153,6 +153,13 @@
 - E/App issue: [#69005](https://github.com/Expensify/App/issues/69005), [#103778](https://github.com/Expensify/App/issues/103778)
 - PR introducing patch: [#69004](https://github.com/Expensify/App/pull/69004) (introduced), [#104689](https://github.com/Expensify/App/pull/104689) (`APP-M66` guard)
 
+### [react-native+0.86.0+020+fix-modal-edge-to-edge-after-status-bar-sync.patch](react-native+0.86.0+020+fix-modal-edge-to-edge-after-status-bar-sync.patch)
+
+- Reason: With the edge-to-edge feature flag off (HybridApp, Android 11 to 14), `StatusBarModule.onExtraWindowCreate()` runs `statusBarShow()` on the new dialog window, which fits it under the system bars again and undoes the `enableEdgeToEdge()` from `updateProperties()`. The dialog is then shorter than the activity, so keyboard-controller's `KeyboardAvoidingView` in `ReanimatedModal` lifts `avoidKeyboard` bottom sheets short by the status bar height. This patch calls `updateProperties()` again after the status bar sync when `navigationBarTranslucent` is set and the flag is off. Builds with the flag on are unchanged.
+- Upstream PR/issue: 🛑
+- E/App issue: [#105145](https://github.com/Expensify/App/issues/105145)
+- PR introducing patch: 🛑
+
 ### [react-native+0.86.0+021+perf-increase-initial-heap-size.patch](react-native+0.86.0+021+perf-increase-initial-heap-size.patch)
 
 - Reason: This patch increases the initial heap size of the Hermes runtime. This allows us to disable Hermes Young-Gen Garbage Collection (GC) in a separate patch, which improves initial TTI and app startup time.
