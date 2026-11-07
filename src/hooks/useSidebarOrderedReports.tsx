@@ -13,7 +13,7 @@ import arraysEqual from '@src/utils/arraysEqual';
 import type {ValueOf} from 'type-fest';
 
 import {authTokenTypeSelector} from '@selectors/Session';
-import React, {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
+import React, {createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 
 import useCollectionDelta from './useCollectionDelta';
 import {useCurrentReportIDState} from './useCurrentReportID';
@@ -361,7 +361,7 @@ function SidebarOrderedReportsContextProvider({
         return result;
     }, [reportsDrafts]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         setCurrentReportsToDisplay(reportsToDisplayInLHN);
     }, [reportsToDisplayInLHN]);
 
