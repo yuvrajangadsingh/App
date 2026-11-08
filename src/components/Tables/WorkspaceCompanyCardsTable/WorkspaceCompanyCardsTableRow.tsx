@@ -5,7 +5,9 @@ import Icon from '@components/Icon';
 import type {TableData} from '@components/Table';
 import Table from '@components/Table';
 import {getCellAccessibilityProps, shouldUseTableSemantics} from '@components/Table/tableAccessibility';
+import Text from '@components/Text';
 import TextWithTooltip from '@components/TextWithTooltip';
+import Tooltip from '@components/Tooltip';
 
 import {useMemoizedLazyExpensifyIcons} from '@hooks/useLazyAsset';
 import useLocalize from '@hooks/useLocalize';
@@ -39,6 +41,9 @@ type WorkspaceCompanyCardTableRowData = TableData &
         /** Provided only when `canEditName` is supported. */
         onRenameName?: (newName: string) => void;
 
+        lastUpdatedText?: string;
+        lastUpdatedTooltip?: string;
+        lastUpdatedSortKey?: number;
         exportAccountTitle?: string;
         onDismissError?: () => void;
     };
@@ -125,7 +130,9 @@ function WorkspaceCompanyCardTableRow({
         return Navigation.navigate(createDynamicRoute(DYNAMIC_ROUTES.WORKSPACE_COMPANY_CARD_DETAILS.getRoute(feedName, cardID.toString())));
     };
 
-    const accessibilityLabel = [memberColumnTitle, formattedCardDetails, formattedCustomCardName, item.exportAccountTitle].filter(Boolean).join(', ');
+    const accessibilityLabel = [memberColumnTitle, formattedCardDetails, formattedCustomCardName, item.lastUpdatedTooltip ?? item.lastUpdatedText, item.exportAccountTitle]
+        .filter(Boolean)
+        .join(', ');
 
     return (
         <Table.Row
@@ -198,6 +205,22 @@ function WorkspaceCompanyCardTableRow({
                                 onSave={item.onRenameName}
                                 displayTextStyle={[styles.lh16, styles.optionDisplayName, styles.pre]}
                             />
+                        </View>
+                    )}
+
+                    {!shouldUseNarrowTableLayout && (
+                        <View
+                            style={[styles.flex1, styles.mnw0, styles.justifyContentCenter]}
+                            {...getCellAccessibilityProps(isTableSemanticsEnabled)}
+                        >
+                            <Tooltip text={item.lastUpdatedTooltip ?? ''}>
+                                <Text
+                                    numberOfLines={1}
+                                    style={[styles.lh16, styles.optionDisplayName, styles.pre]}
+                                >
+                                    {item.lastUpdatedText ?? ''}
+                                </Text>
+                            </Tooltip>
                         </View>
                     )}
 

@@ -2666,6 +2666,7 @@ export {
     getCardConnectionStatusDisplay,
     isBrokenConnectionPastDismissThreshold,
     isLastScrapePastDismissThreshold,
+    parseCardLastScrape,
     toMonthlySettlementDate,
     isSmartLimitEnabled,
     lastFourNumbersFromCardName,

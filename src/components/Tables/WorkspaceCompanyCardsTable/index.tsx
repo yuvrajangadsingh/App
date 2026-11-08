@@ -21,7 +21,7 @@ import useThemeStyles from '@hooks/useThemeStyles';
 
 import {clearCompanyCardErrorField, resetFailedWorkspaceCompanyCardUnassignment} from '@libs/actions/CompanyCards';
 import {renameCompanyCardInline} from '@libs/actions/Policy/InlineEdit';
-import {formatMaskedCardName, getCompanyCardCustomName, getDefaultCardName} from '@libs/CardUtils';
+import {formatMaskedCardName, getCompanyCardCustomName, getDefaultCardName, parseCardLastScrape} from '@libs/CardUtils';
 import {getLatestErrorField} from '@libs/ErrorUtils';
 import {getConnectedIntegration} from '@libs/PolicyUtils';
 import showInlineEditError from '@libs/showInlineEditError';
@@ -43,6 +43,7 @@ import isLoadingOnyxValue from '@src/types/utils/isLoadingOnyxValue';
 import type {ListRenderItemInfo} from '@shopify/flash-list';
 
 import {companyCardCustomNamesSelector} from '@selectors/Card';
+import {format} from 'date-fns';
 import {Str} from 'expensify-common';
 import React, {useImperativeHandle, useRef, useState} from 'react';
 import {View} from 'react-native';
@@ -53,7 +54,7 @@ import WorkspaceCompanyCardsTableControls from './WorkspaceCompanyCardsTableCont
 import WorkspaceCompanyCardsTableHeaderButtons from './WorkspaceCompanyCardsTableHeaderButtons';
 import WorkspaceCompanyCardTableItem from './WorkspaceCompanyCardsTableRow';
 
-type CompanyCardsTableColumnKey = 'member' | 'card' | 'customCardName' | 'exportAccount' | 'actions';
+type CompanyCardsTableColumnKey = 'member' | 'card' | 'customCardName' | 'lastUpdated' | 'exportAccount' | 'actions';
 
 type WorkspaceCompanyCardsTableHandle = {
     clearSelection: () => void;
@@ -102,7 +103,7 @@ function WorkspaceCompanyCardsTable({
 }: WorkspaceCompanyCardsTableProps) {
     const styles = useThemeStyles();
     const {isOffline} = useNetwork();
-    const {translate, localeCompare, formatPhoneNumber} = useLocalize();
+    const {translate, localeCompare, formatPhoneNumber, getLocalDateFromDatetime, dateFnsLocale} = useLocalize();
     const {shouldUseNarrowLayout, isMediumScreenWidth} = useResponsiveLayout();
     const tableRef = useRef<TableHandle<WorkspaceCompanyCardTableItemData, CompanyCardsTableColumnKey>>(null);
 
@@ -256,6 +257,19 @@ function WorkspaceCompanyCardsTable({
                 extraWidth: variables.editableCellChromeWidth,
             },
         },
+        {
+            key: 'lastUpdated',
+            label: translate('workspace.moreFeatures.companyCards.lastUpdated'),
+            sortable: true,
+            styling: {
+                containerStyles: [styles.mnw0],
+            },
+            dynamicSizing: {
+                getContentToMeasure: (item) => (item.lastUpdatedText ? [{text: item.lastUpdatedText, fontSize: fontScale.text}] : []),
+                shouldFitContent: true,
+                maxWidth: CONST.TABLES.DYNAMIC_COLUMNS.MAX_FREE_TEXT_COLUMN_WIDTH,
+            },
+        },
         ...(shouldShowExportAccountColumn ? [getExportAccountColumn<WorkspaceCompanyCardTableItemData>(translate('workspace.moreFeatures.companyCards.exportAccount'), styles)] : []),
         {
             key: 'actions',
@@ -291,11 +305,32 @@ function WorkspaceCompanyCardsTable({
                   const canEditName = canWriteCompanyCards && !!bankName && isAssigned && cardID !== undefined && !isCardDeleted && !isSelectionModeActive;
                   const transactionStartDateErrors = getLatestErrorField(assignedCard ?? {}, 'scrapeMinDate');
                   const hasTransactionStartDateErrors = !isEmptyObject(transactionStartDateErrors);
+                  const lastScrapeErrors = getLatestErrorField(assignedCard ?? {}, 'lastScrape');
+                  const hasLastScrapeErrors = !isEmptyObject(lastScrapeErrors);
+
+                  let lastUpdatedText: string | undefined;
+                  let lastUpdatedTooltip: string | undefined;
+                  let lastUpdatedSortKey: number | undefined;
+                  const lastScrapeDate = assignedCard ? parseCardLastScrape(assignedCard) : undefined;
+                  if (assignedCard?.isLoadingLastUpdated) {
+                      lastUpdatedText = translate('workspace.moreFeatures.companyCards.updating');
+                  } else if (lastScrapeDate) {
+                      const localDate = getLocalDateFromDatetime(assignedCard?.lastScrape);
+                      const isPastYear = localDate.getFullYear() !== getLocalDateFromDatetime().getFullYear();
+                      lastUpdatedText = format(localDate, isPastYear ? CONST.DATE.MONTH_DAY_YEAR_ABBR_FORMAT : CONST.DATE.MONTH_DAY_ABBR_FORMAT, {locale: dateFnsLocale});
+                      lastUpdatedTooltip = translate('workspace.moreFeatures.companyCards.lastSuccessfulSync', format(localDate, CONST.DATE.FNS_DATE_TIME_FORMAT_STRING));
+                  } else if (assignedCard) {
+                      lastUpdatedText = translate('workspace.moreFeatures.companyCards.neverUpdated');
+                  }
+                  if (assignedCard) {
+                      // Never synced sorts oldest, and a running sync keeps the row at its old timestamp.
+                      lastUpdatedSortKey = lastScrapeDate?.getTime() ?? 0;
+                  }
                   // The feed-level prompt owns connection errors, but a failed start-date edit is a separate user action
                   // and must remain visible and dismissible on the affected row.
                   const cardErrors = isFeedConnectionBroken || assignedCard?.pendingFields?.lastScrape ? undefined : assignedCard?.errors;
                   const hasVisibleCardErrors = !isEmptyObject(cardErrors ?? {});
-                  const rowErrors = hasTransactionStartDateErrors ? {...cardErrors, ...transactionStartDateErrors} : cardErrors;
+                  const rowErrors = hasTransactionStartDateErrors || hasLastScrapeErrors ? {...cardErrors, ...transactionStartDateErrors, ...lastScrapeErrors} : cardErrors;
 
                   return {
                       cardName,
@@ -307,6 +342,9 @@ function WorkspaceCompanyCardsTable({
                       isAssigned,
                       assignedCard,
                       cardholder,
+                      lastUpdatedText,
+                      lastUpdatedTooltip,
+                      lastUpdatedSortKey,
                       // Unassigned cards have no details page and so no Accounting section to match, hence no title.
                       exportAccountTitle: shouldShowExportAccountColumn && assignedCard ? getCardExportAccountTitle(cardExportSettings, assignedCard) : undefined,
                       errors: rowErrors,
@@ -321,6 +359,9 @@ function WorkspaceCompanyCardsTable({
                       onDismissError: () => {
                           if (hasTransactionStartDateErrors && bankName && cardID !== undefined) {
                               clearCompanyCardErrorField(domainOrWorkspaceAccountID, String(cardID), bankName, 'scrapeMinDate', true);
+                          }
+                          if (hasLastScrapeErrors && bankName && cardID !== undefined) {
+                              clearCompanyCardErrorField(domainOrWorkspaceAccountID, String(cardID), bankName, 'lastScrape', true);
                           }
                           if (hasVisibleCardErrors) {
                               resetFailedWorkspaceCompanyCardUnassignment(domainOrWorkspaceAccountID, bankName, assignedCard?.cardID);
@@ -353,6 +394,11 @@ function WorkspaceCompanyCardsTable({
     const compareItems: CompareItemsCallback<WorkspaceCompanyCardTableItemData, CompanyCardsTableColumnKey> = (a, b, activeSorting) => {
         const orderMultiplier = activeSorting.order === 'asc' ? 1 : -1;
 
+        // Unassigned rows have nothing to sort by here, so they stay last in both directions.
+        if (activeSorting.columnKey === 'lastUpdated' && a.isAssigned !== b.isAssigned) {
+            return a.isAssigned ? -1 : 1;
+        }
+
         if (a.isAssigned && !b.isAssigned) {
             return 1 * orderMultiplier;
         }
@@ -381,6 +427,12 @@ function WorkspaceCompanyCardsTable({
 
         if (activeSorting.columnKey === 'customCardName') {
             return localeCompare(a.customCardName ?? '', b.customCardName ?? '') * orderMultiplier;
+        }
+
+        if (activeSorting.columnKey === 'lastUpdated') {
+            const lastUpdatedComparison = (a.lastUpdatedSortKey ?? 0) - (b.lastUpdatedSortKey ?? 0);
+
+            return (lastUpdatedComparison !== 0 ? lastUpdatedComparison : cardNameComparison) * orderMultiplier;
         }
 
         if (activeSorting.columnKey === 'exportAccount') {
