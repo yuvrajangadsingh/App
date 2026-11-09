@@ -1,3 +1,4 @@
+import useBeforeRemove from '@hooks/useBeforeRemove';
 import useDynamicBackPath from '@hooks/useDynamicBackPath';
 import useDynamicForwardPath from '@hooks/useDynamicForwardPath';
 import useEnvironment from '@hooks/useEnvironment';
@@ -28,7 +29,7 @@ import isLoadingOnyxValue from '@src/types/utils/isLoadingOnyxValue';
 
 import {findFocusedRoute} from '@react-navigation/native';
 import {authTokenTypeSelector} from '@selectors/Session';
-import React from 'react';
+import React, {useRef} from 'react';
 
 import SuccessPageBase from './SuccessPageBase';
 
@@ -46,7 +47,9 @@ function DynamicSuccessPage({route}: DynamicSuccessPageProps) {
     const isSecuritySettingsFlow = focusedRoute?.name === SCREENS.SETTINGS.SECURITY;
     // The require-2FA overlay opens setup on settings/security?forceSetup=true. The base route's query params are merged
     // into this screen's params and survive the Onyx clear in validateTwoFactorAuth, unlike account flags.
-    const isForcedSetupFlow = isSecuritySettingsFlow && route.params?.forceSetup === 'true';
+    // Read from the route param only: once the Home reveal runs, Security is no longer the base underneath.
+    const isForcedSetupFlow = route.params?.forceSetup === 'true';
+    const isForcedExitInProgress = useRef(false);
 
     const [tryNewDot, tryNewDotMetadata] = useOnyx(ONYXKEYS.NVP_TRY_NEW_DOT);
     const [account] = useOnyx(ONYXKEYS.ACCOUNT);
@@ -70,6 +73,10 @@ function DynamicSuccessPage({route}: DynamicSuccessPageProps) {
     const is2FAEnabled = !!account?.requiresTwoFactorAuth;
 
     const completeForcedOnboarding2FAHandoff = () => {
+        if (isForcedExitInProgress.current) {
+            return;
+        }
+        isForcedExitInProgress.current = true;
         clearTwoFactorAuthData(is2FAEnabled, true);
         const onboardingFlowParams = buildOnboardingFlowParams(account, onboardingValues, onboardingCompanySize, onboardingPurposeSelected, onboardingInitialPath);
         Navigation.revealRouteBeforeDismissingModal(ROUTES.HOME, {
@@ -80,6 +87,10 @@ function DynamicSuccessPage({route}: DynamicSuccessPageProps) {
     };
 
     const sendForcedSetupUserHome = () => {
+        if (isForcedExitInProgress.current) {
+            return;
+        }
+        isForcedExitInProgress.current = true;
         Navigation.revealRouteBeforeDismissingModal(ROUTES.HOME, {
             afterTransition: () => {
                 clearTwoFactorAuthData(is2FAEnabled, true);
@@ -151,6 +162,16 @@ function DynamicSuccessPage({route}: DynamicSuccessPageProps) {
             }
         }
     };
+
+    // Android/browser Back and backdrop dismissal would otherwise reveal Security underneath. Route them through the
+    // Home exit, and let the helper's own DISMISS_MODAL commit directly.
+    useBeforeRemove((e) => {
+        if (!isForcedSetupFlow || e.data.action.type === CONST.NAVIGATION.ACTION_TYPE.DISMISS_MODAL) {
+            return;
+        }
+        e.preventDefault();
+        goBack();
+    });
 
     return (
         <SuccessPageBase
