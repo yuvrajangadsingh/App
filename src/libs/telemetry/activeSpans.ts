@@ -28,6 +28,22 @@ function getPerformanceStartTimeForLog(startTime: StartSpanOptions['startTime'])
     return performanceTimestamp - (Date.now() - epochStartTime);
 }
 
+const TRACKED_OPERATIONS = new Set<string>([CONST.TELEMETRY.SPAN_APP_STARTUP, CONST.TELEMETRY.SPAN_OPEN_REPORT, ...Object.values(CONST.TELEMETRY.SPAN_STARTUP_DATA)]);
+
+/**
+ * Publishes the in-flight tracked operations to the Sentry scope, so native events (e.g. app hangs) captured
+ * during a stall carry them. Only fixed operation names are sent, never report IDs or payloads.
+ */
+function publishActiveOperations() {
+    const operations = [...activeSpans.values()]
+        .filter((entry) => TRACKED_OPERATIONS.has(entry.spanName))
+        .map(({span, spanName}) => {
+            const {trace_id: traceId, span_id: spanId, start_timestamp: startTimestamp} = Sentry.spanToJSON(span);
+            return {name: spanName, startTime: startTimestamp, traceId, spanId};
+        });
+    Sentry.setContext(CONST.TELEMETRY.CONTEXT_ACTIVE_OPERATIONS, {operations});
+}
+
 function startSpan(spanId: string, options: StartSpanOptions) {
     if ((AppState.currentState ?? CONST.APP_STATE.ACTIVE) !== CONST.APP_STATE.ACTIVE && !isBenchmarkSpanEnabled(options.name)) {
         return;
@@ -46,6 +62,10 @@ function startSpan(spanId: string, options: StartSpanOptions) {
     const startTimeForLog = getPerformanceStartTimeForLog(options.startTime);
 
     activeSpans.set(spanId, {span, spanName: options.name, startTimeForLog});
+    if (TRACKED_OPERATIONS.has(options.name)) {
+        Sentry.addBreadcrumb({category: 'operation', message: `Started ${options.name}`});
+        publishActiveOperations();
+    }
 
     return span;
 }
@@ -69,6 +89,10 @@ function endSpan(spanId: string) {
     span.setAttribute(CONST.TELEMETRY.ATTRIBUTE_FINISHED_MANUALLY, true);
     span.end();
     activeSpans.delete(spanId);
+    if (TRACKED_OPERATIONS.has(spanName)) {
+        Sentry.addBreadcrumb({category: 'operation', message: `Ended ${spanName} (${durationMs}ms)`});
+        publishActiveOperations();
+    }
 }
 
 function cancelSpan(spanId: string) {
