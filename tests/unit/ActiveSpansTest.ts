@@ -16,6 +16,9 @@ const mockStartInactiveSpan = jest.fn<MockInactiveSpan, [StartSpanOptions]>(() =
     end: jest.fn<void, Parameters<Span['end']>>(),
 }));
 
+const mockAddBreadcrumb = jest.fn<void, [{category: string; message: string}]>();
+const mockSetContext = jest.fn<void, [string, Record<string, unknown>]>();
+
 jest.mock('@libs/telemetry/logBenchmarkSpanEnd', () => ({
     __esModule: true,
     default: jest.fn(),
@@ -24,11 +27,15 @@ jest.mock('@libs/telemetry/logBenchmarkSpanEnd', () => ({
 jest.mock('@sentry/react-native', () => ({
     startInactiveSpan: (options: StartSpanOptions) => mockStartInactiveSpan(options),
     spanToJSON: () => ({data: {}}),
+    addBreadcrumb: (breadcrumb: {category: string; message: string}) => mockAddBreadcrumb(breadcrumb),
+    setContext: (key: string, context: Record<string, unknown>) => mockSetContext(key, context),
 }));
 
 afterEach(() => {
     jest.restoreAllMocks();
     mockStartInactiveSpan.mockClear();
+    mockAddBreadcrumb.mockClear();
+    mockSetContext.mockClear();
 });
 
 describe('activeSpans', () => {
@@ -92,6 +99,55 @@ describe('activeSpans', () => {
             expect(mockStartInactiveSpan).toHaveBeenCalledWith({name: 'InheritingSpan', forceTransaction: false});
 
             endSpan('InheritingSpan');
+        });
+    });
+    describe('operation context', () => {
+        beforeEach(() => {
+            jest.spyOn(console, 'debug').mockImplementation(() => {});
+        });
+
+        it('publishes a tracked operation while it runs and records when it ended', () => {
+            // Given app startup, one of the operations a native app hang should be able to name
+            startSpan(CONST.TELEMETRY.SPAN_APP_STARTUP, {name: CONST.TELEMETRY.SPAN_APP_STARTUP});
+
+            // Then the scope lists it as active, so a hang detected now carries it
+            expect(mockSetContext).toHaveBeenLastCalledWith(CONST.TELEMETRY.CONTEXT_ACTIVE_OPERATIONS, {
+                operations: [expect.objectContaining({name: CONST.TELEMETRY.SPAN_APP_STARTUP})],
+            });
+
+            // When it ends
+            endSpan(CONST.TELEMETRY.SPAN_APP_STARTUP);
+
+            // Then it is no longer active, and a breadcrumb keeps it for a hang detected just after
+            expect(mockSetContext).toHaveBeenLastCalledWith(CONST.TELEMETRY.CONTEXT_ACTIVE_OPERATIONS, {operations: []});
+            expect(mockAddBreadcrumb.mock.lastCall?.[0].category).toBe('operation');
+            expect(mockAddBreadcrumb.mock.lastCall?.[0].message).toContain(`Ended ${CONST.TELEMETRY.SPAN_APP_STARTUP}`);
+        });
+
+        it('keeps an overlapping operation active when another one ends', () => {
+            // Given a startup data phase and a report opening running at the same time
+            startSpan(CONST.TELEMETRY.SPAN_STARTUP_DATA.APPLY, {name: CONST.TELEMETRY.SPAN_STARTUP_DATA.APPLY});
+            startSpan(CONST.TELEMETRY.SPAN_OPEN_REPORT, {name: CONST.TELEMETRY.SPAN_OPEN_REPORT});
+
+            // When the startup phase ends
+            endSpan(CONST.TELEMETRY.SPAN_STARTUP_DATA.APPLY);
+
+            // Then only the report opening is still listed
+            expect(mockSetContext).toHaveBeenLastCalledWith(CONST.TELEMETRY.CONTEXT_ACTIVE_OPERATIONS, {
+                operations: [expect.objectContaining({name: CONST.TELEMETRY.SPAN_OPEN_REPORT})],
+            });
+
+            endSpan(CONST.TELEMETRY.SPAN_OPEN_REPORT);
+        });
+
+        it('leaves the scope alone for operations outside the list', () => {
+            // When a span that is not a tracked operation starts and ends
+            startSpan('SomethingElse', {name: 'SomethingElse'});
+            endSpan('SomethingElse');
+
+            // Then nothing is published, so the context only ever names the fixed operations
+            expect(mockSetContext).not.toHaveBeenCalled();
+            expect(mockAddBreadcrumb).not.toHaveBeenCalled();
         });
     });
     describe('getSpanByPrefix', () => {
