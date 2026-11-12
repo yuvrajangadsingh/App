@@ -40,6 +40,7 @@ import type SearchResults from '@src/types/onyx/SearchResults';
 import type {OnyxCollection} from 'react-native-onyx';
 
 import {useIsFocused} from '@react-navigation/native';
+import {AppState} from 'react-native';
 
 import createMock from '../../../utils/createMock';
 
@@ -974,6 +975,111 @@ describe('useYourSpendData — refires search when a relevant report state chang
         rerender(undefined);
 
         expect(approvalSearchCallCount()).toBe(before);
+    });
+});
+
+// reopening the app runs the real useAppReturnCount and useTabFocusedRefresh
+
+describe('useYourSpendData — reopening the app', () => {
+    const MINUTE_MS = 60 * 1000;
+    let appStateListener: ((state: string) => void) | undefined;
+
+    function makeReport(total: number): Report {
+        return {
+            reportID: 'r1',
+            policyID: 'policy_1',
+            ownerAccountID: ACCOUNT_ID,
+            stateNum: CONST.REPORT.STATE_NUM.SUBMITTED,
+            statusNum: CONST.REPORT.STATUS_NUM.SUBMITTED,
+            total,
+            currency: 'USD',
+        } as Report;
+    }
+
+    function approvalSearchCallCount(): number {
+        const approvalHash = buildSearchQueryJSON(APPROVAL_QUERY)?.hash;
+        return mockedSearch.mock.calls.filter((call) => call.at(0)?.queryJSON?.hash === approvalHash).length;
+    }
+
+    function sendAppState(state: string) {
+        act(() => appStateListener?.(state));
+    }
+
+    function reopen() {
+        sendAppState('background');
+        sendAppState('active');
+    }
+
+    beforeEach(() => {
+        jest.useFakeTimers();
+        appStateListener = undefined;
+        jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, listener) => {
+            appStateListener = listener;
+            return {remove: jest.fn()};
+        });
+        mockedIsPaidGroupPolicy.mockReturnValue(true);
+        onyxData[ONYXKEYS.COLLECTION.REPORT] = {[`${ONYXKEYS.COLLECTION.REPORT}r1`]: makeReport(1000)};
+    });
+
+    afterEach(() => {
+        jest.useRealTimers();
+        jest.restoreAllMocks();
+    });
+
+    it('sends the Awaiting approval search once for a reopen more than a minute after the last refresh, with the same data', () => {
+        // Given Home has searched
+        renderHook(() => useYourSpendData());
+        const before = approvalSearchCallCount();
+        expect(appStateListener).toBeDefined();
+
+        // When the app is reopened after more than a minute, with nothing changed
+        act(() => {
+            jest.advanceTimersByTime(MINUTE_MS + 1000);
+        });
+        reopen();
+
+        // Then the search is sent once
+        expect(approvalSearchCallCount()).toBe(before + 1);
+    });
+
+    it('sends nothing for quick reopens, and once for a long reopen with timers held while away', () => {
+        // Given Home has searched
+        renderHook(() => useYourSpendData());
+        const before = approvalSearchCallCount();
+
+        // When the app is reopened twice within the window
+        act(() => {
+            jest.advanceTimersByTime(10 * 1000);
+        });
+        reopen();
+        reopen();
+
+        // Then nothing is sent
+        expect(approvalSearchCallCount()).toBe(before);
+
+        // When the clock moves on more than a minute while JS timers are held, as on Android, and the app is reopened
+        jest.setSystemTime(Date.now() + 2 * MINUTE_MS);
+        reopen();
+
+        // Then it is sent once, and the old window ending sends nothing more
+        expect(approvalSearchCallCount()).toBe(before + 1);
+        act(() => {
+            jest.advanceTimersByTime(MINUTE_MS);
+        });
+        expect(approvalSearchCallCount()).toBe(before + 1);
+    });
+
+    it('sends the search for a report total change with no reopen', () => {
+        // Given Home has searched
+        const {rerender} = renderHook(() => useYourSpendData());
+        const before = approvalSearchCallCount();
+
+        // When another device edits the report total
+        onyxData[ONYXKEYS.COLLECTION.REPORT] = {[`${ONYXKEYS.COLLECTION.REPORT}r1`]: makeReport(2000)};
+        rerender(undefined);
+
+        // Then the search is sent without any return being counted
+        expect(approvalSearchCallCount()).toBe(before + 1);
     });
 });
 
