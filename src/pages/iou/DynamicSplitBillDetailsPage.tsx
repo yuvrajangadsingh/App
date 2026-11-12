@@ -1,4 +1,5 @@
 import FullPageNotFoundView from '@components/BlockingViews/FullPageNotFoundView';
+import FullscreenLoadingIndicator from '@components/FullscreenLoadingIndicator';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import Icon from '@components/Icon';
 import {ImageBehaviorContextProvider} from '@components/Image/ImageBehaviorContextProvider';
@@ -11,7 +12,9 @@ import useDelegateAccountID from '@hooks/useDelegateAccountID';
 import useDynamicBackPath from '@hooks/useDynamicBackPath';
 import {useMemoizedLazyExpensifyIcons} from '@hooks/useLazyAsset';
 import useLocalize from '@hooks/useLocalize';
+import useNetwork from '@hooks/useNetwork';
 import useOnyx from '@hooks/useOnyx';
+import useOpenReport from '@hooks/useOpenReport';
 import usePermissions from '@hooks/usePermissions';
 import {useAllPersonalDetails} from '@hooks/usePersonalDetails';
 import useReportAttributes from '@hooks/useReportAttributes';
@@ -46,7 +49,7 @@ import type {Participant} from '@src/types/onyx/IOU';
 import {isEmptyObject} from '@src/types/utils/EmptyObject';
 
 import {isTrackIntentUserSelector} from '@selectors/Onboarding';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {View} from 'react-native';
 
 type SplitBillDetailsPageProps = WithReportAndReportActionOrNotFoundProps & PlatformStackScreenProps<SplitDetailsNavigatorParamList, typeof SCREENS.SPLIT_DETAILS.DYNAMIC_ROOT>;
@@ -65,7 +68,30 @@ function DynamicSplitBillDetailsPage({report, reportAction}: SplitBillDetailsPag
     const IOUTransactionID = originalMessage?.IOUTransactionID;
     const participantAccountIDs = originalMessage?.participantAccountIDs ?? [];
 
-    const [transaction] = useOnyx(`${ONYXKEYS.COLLECTION.TRANSACTION}${getNonEmptyStringOnyxID(IOUTransactionID)}`);
+    const [transaction, transactionResult] = useOnyx(`${ONYXKEYS.COLLECTION.TRANSACTION}${getNonEmptyStringOnyxID(IOUTransactionID)}`);
+    const [reportLoadingState] = useOnyx(`${ONYXKEYS.COLLECTION.RAM_ONLY_REPORT_LOADING_STATE}${reportID}`);
+    const {isOffline} = useNetwork();
+    const openReport = useOpenReport();
+    const [requestedKey, setRequestedKey] = useState<string>();
+    const recoveryKey = `${reportID}_${reportAction?.reportActionID}`;
+    const isTransactionMissing = transactionResult.status === 'loaded' && isEmptyObject(transaction) && !!reportID && !isEmptyObject(reportAction);
+    const hasRequested = requestedKey === recoveryKey;
+
+    // The transaction can be missing after a reset, so request the DM once before treating it as not found
+    useEffect(() => {
+        if (!isTransactionMissing || hasRequested || isOffline) {
+            return;
+        }
+        setRequestedKey(recoveryKey);
+        openReport({reportID, hasReportActions: true});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isTransactionMissing, hasRequested, isOffline, recoveryKey]);
+
+    const isRecoveringTransaction =
+        !!reportID &&
+        !isEmptyObject(reportAction) &&
+        isEmptyObject(transaction) &&
+        (transactionResult.status === 'loading' || (!isOffline && (!hasRequested || !!reportLoadingState?.isLoadingInitialReportActions)));
     const [draftTransaction] = useOnyx(`${ONYXKEYS.COLLECTION.SPLIT_TRANSACTION_DRAFT}${IOUTransactionID}`);
     const [personalDetails] = useAllPersonalDetails();
     const [transactionReport] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${transaction?.reportID}`);
@@ -159,6 +185,10 @@ function DynamicSplitBillDetailsPage({report, reportAction}: SplitBillDetailsPag
         cleanupAfterExpenseCreate({draftTransactionIDs: [CONST.IOU.OPTIMISTIC_TRANSACTION_ID], shouldWaitForUpcomingTransition: true});
         dismissModalAndOpenReportInInboxTab(reportID, undefined, chatReportTransactions.length > 0);
     };
+
+    if (isRecoveringTransaction) {
+        return <FullscreenLoadingIndicator />;
+    }
 
     return (
         <ScreenWrapper testID="DynamicSplitBillDetailsPage">

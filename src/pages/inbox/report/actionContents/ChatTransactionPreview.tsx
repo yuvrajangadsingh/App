@@ -1,6 +1,6 @@
 import {usePersonalDetails} from '@components/OnyxListItemProvider';
 import TransactionPreview from '@components/ReportActionItem/TransactionPreview';
-import {useIsOnSearch} from '@components/Search/SearchScopeProvider';
+import {SearchScopeProvider, useIsOnSearch} from '@components/Search/SearchScopeProvider';
 
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
@@ -83,7 +83,7 @@ function ChatTransactionPreview({action, reportID, chatReport, iouReport, should
 
     const reportPreviewStyles = StyleUtils.getMoneyRequestReportPreviewStyle(shouldUseNarrowLayout, 1, undefined, undefined);
 
-    return (
+    const preview = (
         <View style={[styles.mt1, styles.w100]}>
             <TransactionPreview
                 iouReportID={getIOUReportIDFromReportActionPreview(action)}
@@ -112,6 +112,9 @@ function ChatTransactionPreview({action, reportID, chatReport, iouReport, should
             />
         </View>
     );
+
+    // Search snapshots can miss the split's transaction, so read live Onyx for the split preview
+    return shouldShowSplitPreview ? <SearchScopeProvider isOnSearch={false}>{preview}</SearchScopeProvider> : preview;
 }
 
 export default ChatTransactionPreview;
