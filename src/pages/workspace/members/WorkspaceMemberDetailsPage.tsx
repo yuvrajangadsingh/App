@@ -205,7 +205,7 @@ function WorkspaceMemberDetailsPage({personalDetails, policy, route}: WorkspaceM
     const {showLockedAccountModal} = useLockedAccountActions();
     const isCustomAgent = !!details.isCustomAgent;
     const hasDisplayNameSet = !!details.firstName || !!details.lastName;
-    const canSetDisplayName = !hasDisplayNameSet && isPolicyAdmin(policy, currentUserLogin);
+    const canSetDisplayName = !!memberPersonalDetails && !hasDisplayNameSet && isPolicyAdmin(policy, currentUserLogin);
     const shouldShowLocalTime = shouldShowLocalTimeUtil({accountID, timezone: details.timezone, isCustomAgent, isValidated: !!details.validated});
 
     // Like ProfilePage, your own row only offers Message when your self DM already exists, so we never optimistically create one

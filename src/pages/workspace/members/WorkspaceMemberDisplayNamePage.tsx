@@ -9,6 +9,7 @@ import TextInput from '@components/TextInput';
 import useDynamicBackPath from '@hooks/useDynamicBackPath';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
+import usePersonalDetailByLogin from '@hooks/usePersonalDetailByLogin';
 import {usePersonalDetail} from '@hooks/usePersonalDetails';
 import useThemeStyles from '@hooks/useThemeStyles';
 
@@ -16,6 +17,7 @@ import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {SettingsNavigatorParamList} from '@libs/Navigation/types';
 import {getDisplayNameErrors} from '@libs/ValidationUtils';
+import {getMemberLoginByAccountID} from '@libs/WorkArrangementUtils';
 
 import AccessOrNotFoundWrapper from '@pages/workspace/AccessOrNotFoundWrapper';
 
@@ -35,11 +37,12 @@ type WorkspaceMemberDisplayNamePageProps = PlatformStackScreenProps<SettingsNavi
 function WorkspaceMemberDisplayNamePage({route}: WorkspaceMemberDisplayNamePageProps) {
     const styles = useThemeStyles();
     const {translate, formatPhoneNumber} = useLocalize();
-    const accountID = Number(route.params.accountID);
+    const routeAccountID = Number(route.params.accountID);
     const policyID = route.params.policyID;
-    const [memberPersonalDetails] = usePersonalDetail(accountID);
+    const [routePersonalDetails] = usePersonalDetail(routeAccountID);
     const [policy] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY}${policyID}`);
-    const memberLogin = memberPersonalDetails?.login;
+    const memberLogin = routePersonalDetails?.login ?? getMemberLoginByAccountID(policy, routeAccountID);
+    const memberPersonalDetails = usePersonalDetailByLogin(memberLogin);
     const hasDisplayNameSet = !!memberPersonalDetails?.firstName || !!memberPersonalDetails?.lastName;
     const isPolicyMember = !!memberLogin && !!policy?.employeeList?.[memberLogin];
     const backPath = useDynamicBackPath(DYNAMIC_ROUTES.WORKSPACE_MEMBER_DISPLAY_NAME.path);
@@ -55,7 +58,7 @@ function WorkspaceMemberDisplayNamePage({route}: WorkspaceMemberDisplayNamePageP
             accessVariants={[CONST.POLICY.ACCESS_VARIANTS.ADMIN]}
             policyFeature={CONST.POLICY.POLICY_FEATURE.MEMBERS}
             policyFeatureAccess={CONST.POLICY.POLICY_FEATURE_ACCESS.WRITE}
-            shouldBeBlocked={!hasSubmitted && (hasDisplayNameSet || !isPolicyMember)}
+            shouldBeBlocked={!hasSubmitted && (hasDisplayNameSet || !isPolicyMember || !memberPersonalDetails)}
             fullPageNotFoundViewProps={{onBackButtonPress: () => Navigation.goBack(backPath)}}
         >
             <ScreenWrapper
@@ -72,17 +75,17 @@ function WorkspaceMemberDisplayNamePage({route}: WorkspaceMemberDisplayNamePageP
                     formID={ONYXKEYS.FORMS.WORKSPACE_MEMBER_DISPLAY_NAME_FORM}
                     validate={validate}
                     onSubmit={(values) => {
-                        if (!memberLogin) {
+                        if (!memberLogin || !memberPersonalDetails) {
                             return;
                         }
                         setHasSubmitted(true);
                         updatePolicyMemberDisplayName(policyID, values.firstName.trim(), values.lastName.trim(), formatPhoneNumber, {
-                            accountID,
+                            accountID: memberPersonalDetails.accountID,
                             email: memberLogin,
-                            firstName: memberPersonalDetails?.firstName,
-                            lastName: memberPersonalDetails?.lastName,
-                            displayName: memberPersonalDetails?.displayName,
-                            avatar: memberPersonalDetails?.avatar,
+                            firstName: memberPersonalDetails.firstName,
+                            lastName: memberPersonalDetails.lastName,
+                            displayName: memberPersonalDetails.displayName,
+                            avatar: memberPersonalDetails.avatar,
                         });
                         Navigation.goBack();
                     }}
