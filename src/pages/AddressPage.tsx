@@ -4,6 +4,7 @@ import DelegateNoAccessWrapper from '@components/DelegateNoAccessWrapper';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import ScreenWrapper from '@components/ScreenWrapper';
 
+import useGeographicalStateAndCountryFromRoute from '@hooks/useGeographicalStateAndCountryFromRoute';
 import useLocalize from '@hooks/useLocalize';
 import useThemeStyles from '@hooks/useThemeStyles';
 
@@ -49,8 +50,12 @@ function AddressPage({title, address, updateAddress, isLoadingApp = true, backTo
     const [street1, legacyStreet2] = street ? street.split('\n') : [undefined, undefined];
     // nullish coalescing cannot be used if explicit line 2 can be an empty string
     const street2 = address?.street2 || legacyStreet2;
-    const [currentCountry, setCurrentCountry] = useState(address?.country ?? defaultCountry);
-    const [state, setState] = useState(address?.state);
+    const {state: stateFromUrl} = useGeographicalStateAndCountryFromRoute();
+    // Picked on this page or deep linked. A valid ?state= is a US state, so it starts as US + that state.
+    const [pickedCountry, setPickedCountry] = useState<Country | '' | undefined>(stateFromUrl ? CONST.COUNTRY.US : undefined);
+    const [pickedState, setPickedState] = useState<string | undefined>(stateFromUrl);
+    const currentCountry = pickedCountry ?? address?.country ?? defaultCountry;
+    const state = pickedState ?? address?.state;
     const [city, setCity] = useState(address?.city);
     const [zipcode, setZipcode] = useState(address?.zip);
 
@@ -58,8 +63,6 @@ function AddressPage({title, address, updateAddress, isLoadingApp = true, backTo
         if (!address) {
             return;
         }
-        setState(address.state);
-        setCurrentCountry(address.country);
         setCity(address.city);
         setZipcode(address.zip);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -73,14 +76,14 @@ function AddressPage({title, address, updateAddress, isLoadingApp = true, backTo
             return;
         }
         if (addressPartKey === INPUT_IDS.COUNTRY && addressPart !== currentCountry) {
-            setCurrentCountry(getCountryCode(addressPart) ?? '');
-            setState('');
+            setPickedCountry((getCountryCode(addressPart) ?? '') as Country | '');
+            setPickedState('');
             setCity('');
             setZipcode('');
             return;
         }
         if (addressPartKey === INPUT_IDS.STATE) {
-            setState(addressPart);
+            setPickedState(addressPart);
             setCity('');
             setZipcode('');
             return;
