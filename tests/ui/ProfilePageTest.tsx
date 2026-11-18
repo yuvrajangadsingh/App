@@ -40,7 +40,7 @@ import waitForBatchedUpdatesWithAct from '../utils/waitForBatchedUpdatesWithAct'
 
 jest.mock('@libs/Navigation/Navigation', () => ({
     navigate: jest.fn(),
-    revealRouteBeforeDismissingModal: jest.fn(),
+    dismissModal: jest.fn(({afterTransition}: {afterTransition?: () => void} = {}) => afterTransition?.()),
     goBack: jest.fn(),
     getActiveRoute: jest.fn(() => ''),
     getActiveRouteWithoutParams: jest.fn(() => ''),
@@ -718,7 +718,9 @@ describe('ProfilePage - See chat history', () => {
         fireEvent.press(screen.getByText('See chat history'), {nativeEvent: {}});
         await waitForBatchedUpdatesWithAct();
 
-        expect(Navigation.revealRouteBeforeDismissingModal).toHaveBeenCalledWith(
+        // Given the profile is open, When See chat history is pressed, Then the panel is dismissed and Search opens after it
+        expect(Navigation.dismissModal).toHaveBeenCalledWith(expect.objectContaining({afterTransition: expect.any(Function)}));
+        expect(Navigation.navigate).toHaveBeenCalledWith(
             ROUTES.SEARCH_ROOT.getRoute({
                 query: `type:${CONST.SEARCH.DATA_TYPES.CHAT} from:${PUBLIC_PROFILE_ACCOUNT_ID}`,
                 rawQuery: `type:${CONST.SEARCH.DATA_TYPES.CHAT} from:${PUBLIC_PROFILE_ACCOUNT_ID}`,
