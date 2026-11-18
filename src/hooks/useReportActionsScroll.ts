@@ -201,7 +201,8 @@ function useReportActionsScroll({
     }
 
     const shouldFocusToTopOnMount = shouldBeAlignedToTop && !initialScrollKey && !shouldScrollToLatestOnOpen;
-    const shouldMaintainVisibleContentPosition = hasScrolledOverThreshold || shouldFocusToTopOnMount;
+    // Keep the reader's place while newer pages are still unloaded, so a landing page moves the offset out of FlashList's start zone and re-arms onStartReached.
+    const shouldMaintainVisibleContentPosition = hasScrolledOverThreshold || shouldFocusToTopOnMount || hasNewerActions;
     const [shouldAutoscrollToBottom, setShouldAutoscrollToBottom] = useState(shouldFocusToTopOnMount);
     const [shouldDisablePillTracking, setShouldDisablePillTracking] = useState(!!initialScrollKey);
 

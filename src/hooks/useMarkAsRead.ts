@@ -350,7 +350,7 @@ function useMarkAsRead({
     };
 
     const completeSkippedMarkAsRead = () => {
-        if (!readActionSkippedRef.current || !Visibility.hasFocus()) {
+        if (!readActionSkippedRef.current || !Visibility.hasFocus() || hasNewerActions) {
             return;
         }
         markNewestActionAsRead();

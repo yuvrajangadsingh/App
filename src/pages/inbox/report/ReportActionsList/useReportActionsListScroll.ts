@@ -1,3 +1,4 @@
+import usePrevious from '@hooks/usePrevious';
 import useReportActionsScroll from '@hooks/useReportActionsScroll';
 import useReportScrollManager from '@hooks/useReportScrollManager';
 import useWindowDimensions from '@hooks/useWindowDimensions';
@@ -16,9 +17,11 @@ import type {ViewToken} from '@src/types/utils/ReactNativeCompat';
 
 import type {LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent} from 'react-native';
 
-import {useEffect, useRef} from 'react';
+import {useEffect, useEffectEvent, useRef} from 'react';
 
 import type {UseReportActionsListScrollParams} from './types';
+
+const START_REACHED_THRESHOLD = 0.75;
 
 /**
  * Create a unique key for each action in the FlatList.
@@ -174,6 +177,22 @@ function useReportActionsListScroll({
         });
     };
 
+    // FlashList fires onStartReached once per visit to the start zone, so ask again when newer actions appear under a list that is still inside it.
+    const loadNewerChatsIfAtNewestEdge = useEffectEvent(() => {
+        const list = listRef.current;
+        if (!list?.getLayout?.(0) || list.getAbsoluteLastScrollOffset() > list.getWindowSize().height * START_REACHED_THRESHOLD) {
+            return;
+        }
+        loadNewerChatsAfterTransitions();
+    });
+    const prevHasNewerActions = usePrevious(hasNewerActions);
+    useEffect(() => {
+        if (!hasNewerActions || prevHasNewerActions) {
+            return;
+        }
+        loadNewerChatsIfAtNewestEdge();
+    }, [hasNewerActions, prevHasNewerActions]);
+
     useFollowActionBadgeTarget({
         reportID,
         actionTargetReportActionID: actionBadgeTargetID,
@@ -197,7 +216,7 @@ function useReportActionsListScroll({
             onEndReached: loadOlderChatsOnEndReached,
             onEndReachedThreshold: 0.75,
             onStartReached: loadNewerChatsAfterTransitions,
-            onStartReachedThreshold: 0.75,
+            onStartReachedThreshold: START_REACHED_THRESHOLD,
             onLayout: (event: LayoutChangeEvent) => {
                 onLayout?.(event);
                 flushPendingScrollToBottom();
