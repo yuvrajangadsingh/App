@@ -17,6 +17,7 @@ import Onyx from 'react-native-onyx';
 import type {GetLogTab, Init, IsClientTheLeader, IsReady, OnBecomeLeader} from './types';
 
 const LEADER_LOCK_NAME = 'activeClientLeader';
+const LEADER_LOCK_RETRY_DELAY_MS = 1000;
 
 // Builds from before Web Locks pick the leader from ACTIVE_CLIENTS alone. The prefix lets us tell their IDs apart while both builds are open.
 const WEB_LOCK_CLIENT_ID_PREFIX = 'webLock_';
@@ -153,9 +154,22 @@ const requestLeaderLock = (shouldSteal: boolean) => {
             if (requestID !== leaderLockRequestID) {
                 return;
             }
+            const lostHeldLock = isHoldingLeaderLock;
             isHoldingLeaderLock = false;
+            isStealingLeaderLock = false;
             notifyIfBecameLeader();
-            requestLeaderLock(false);
+            if (lostHeldLock) {
+                requestLeaderLock(false);
+                return;
+            }
+
+            // A request rejected before it was granted would loop in microtasks and block the main thread, so retry on a later task
+            setTimeout(() => {
+                if (requestID !== leaderLockRequestID) {
+                    return;
+                }
+                requestLeaderLock(false);
+            }, LEADER_LOCK_RETRY_DELAY_MS);
         });
 };
 
