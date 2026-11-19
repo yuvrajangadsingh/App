@@ -7,6 +7,7 @@ import type {FormInputErrors, FormOnyxValues, FormRef} from '@components/Form/ty
 import type {AnimatedTextInputRef} from '@components/RNTextInput';
 import TextInput from '@components/TextInput';
 
+import useKeyboardState from '@hooks/useKeyboardState';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
 import useThemeStyles from '@hooks/useThemeStyles';
@@ -142,6 +143,9 @@ function DescribeRuleForm({
     const formRef = useRef<FormRef>(null);
     const inputRef = useRef<AnimatedTextInputRef>(null);
     const inputTopOffsetRef = useRef(0);
+    const {isKeyboardShown} = useKeyboardState();
+    const hasFormScrolledRef = useRef(false);
+    const isTapOnInputRef = useRef(false);
     const pendingGenerationRef = useRef<PendingGeneration>(undefined);
     const [submittedGenerationID, setSubmittedGenerationID] = useState<string>();
     const [generatedRule] = useOnyx(ONYXKEYS.GENERATED_RULE);
@@ -285,6 +289,21 @@ function DescribeRuleForm({
     // the content, therefore the submit button below the input also stays in view when it fits.
     const scrollToInput = () => formRef.current?.scrollTo(inputTopOffsetRef.current);
 
+    const trackFormScroll = () => {
+        hasFormScrolledRef.current = true;
+        // A touch that scrolls the form is a swipe, so the form stays where the admin left it
+        isTapOnInputRef.current = false;
+    };
+
+    // The box keeps focus while the form scrolls, so editing it again sends no focus event
+    const scrollBackToInput = () => {
+        if (!isKeyboardShown || !hasFormScrolledRef.current) {
+            return;
+        }
+        hasFormScrolledRef.current = false;
+        scrollToInput();
+    };
+
     const describeSuggestedRule = (suggestedPrompt: string) => {
         Log.info('[GenerateRule] Tried the suggested description', false, {policyID, generationID: refusal?.generationID, reason: refusal?.reason});
         formRef.current?.resetForm({[INPUT_IDS.PROMPT]: suggestedPrompt});
@@ -305,6 +324,7 @@ function DescribeRuleForm({
             shouldUseScrollView={shouldUseScrollView}
             // scrollToInput moves the whole box above the keyboard. If Android also moves the box, the page moves two times.
             shouldScrollChildToFocus={false}
+            onScroll={trackFormScroll}
             submitFlexEnabled={submitFlexEnabled}
             shouldHideFixErrorsAlert
             isSubmitButtonNeutral={suggestionButtonRow.isSubmitButtonNeutral}
@@ -321,6 +341,16 @@ function DescribeRuleForm({
                 onLayout={(event) => {
                     inputTopOffsetRef.current = event.nativeEvent.layout.y;
                 }}
+                onTouchStart={() => {
+                    isTapOnInputRef.current = true;
+                }}
+                onTouchEnd={() => {
+                    if (!isTapOnInputRef.current) {
+                        return;
+                    }
+                    isTapOnInputRef.current = false;
+                    scrollBackToInput();
+                }}
             >
                 <InputWrapper
                     InputComponent={TextInput}
@@ -334,6 +364,7 @@ function DescribeRuleForm({
                     role={CONST.ROLE.PRESENTATION}
                     onKeyPress={submitFormOnModEnter}
                     onFocus={scrollToInput}
+                    onValueChange={scrollBackToInput}
                     maxLength={CONST.GENERATED_RULE.PROMPT_MAX_LENGTH}
                     multiline
                     shouldSaveDraft
