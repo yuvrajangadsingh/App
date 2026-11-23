@@ -2566,6 +2566,7 @@ const translations: TranslationDeepObject<typeof en> = {
             testCrash: 'Test arresto anomalo',
             resetToOriginalState: 'Reimposta allo stato originale',
             usingImportedState: 'Stai utilizzando uno stato importato. Premi qui per cancellarlo.',
+            failingRequests: 'Tutte le richieste sono impostate per fallire. Premi qui per disattivarlo.',
             debugMode: 'Modalità debug',
             invalidFile: 'File non valido',
             invalidFileDescription: 'Il file che stai tentando di importare non è valido. Riprova.',

@@ -2553,6 +2553,7 @@ const translations: TranslationDeepObject<typeof en> = {
             testCrash: 'Prueba de fallo',
             resetToOriginalState: 'Restablecer al estado original',
             usingImportedState: 'Estás utilizando el estado importado. Pulsa aquí para borrarlo.',
+            failingRequests: 'Todas las solicitudes están configuradas para fallar. Pulsa aquí para desactivarlo.',
             debugMode: 'Modo depuración',
             invalidFile: 'Archivo inválido',
             invalidFileDescription: 'El archivo que ests intentando importar no es válido. Por favor, inténtalo de nuevo.',

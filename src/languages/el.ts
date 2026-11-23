@@ -2626,6 +2626,7 @@ const translations: TranslationDeepObject<typeof en> = {
             testCrash: 'Δοκιμαστική κατάρρευση',
             resetToOriginalState: 'Επαναφορά στην αρχική κατάσταση',
             usingImportedState: 'Χρησιμοποιείτε εισαγόμενη κατάσταση. Πατήστε εδώ για να την καθαρίσετε.',
+            failingRequests: 'Όλα τα αιτήματα έχουν οριστεί να αποτυγχάνουν. Πατήστε εδώ για να το απενεργοποιήσετε.',
             debugMode: 'Λειτουργία αποσφαλμάτωσης',
             showBranchNameInTitle: 'Εμφάνιση ονόματος κλάδου στον τίτλο του προγράμματος περιήγησης',
             betaOverrides: 'Παρακάμψεις beta',

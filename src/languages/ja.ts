@@ -2545,6 +2545,7 @@ const translations: TranslationDeepObject<typeof en> = {
             testCrash: 'テストクラッシュ',
             resetToOriginalState: '元の状態にリセット',
             usingImportedState: 'インポートされた状態を使用しています。ここを押してクリアします。',
+            failingRequests: 'すべてのリクエストが失敗するように設定されています。ここを押してオフにします。',
             debugMode: 'デバッグモード',
             invalidFile: '無効なファイル',
             invalidFileDescription: 'インポートしようとしているファイルが無効です。もう一度お試しください。',

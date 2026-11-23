@@ -2471,6 +2471,7 @@ const translations: TranslationDeepObject<typeof en> = {
             testCrash: '测试崩溃',
             resetToOriginalState: '重置为原始状态',
             usingImportedState: '您正在使用导入的状态。点此清除。',
+            failingRequests: '所有请求都被设置为失败。点此关闭。',
             debugMode: '调试模式',
             invalidFile: '文件无效',
             invalidFileDescription: '您尝试导入的文件无效。请重试。',

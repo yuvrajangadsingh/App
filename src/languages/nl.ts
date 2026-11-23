@@ -2561,6 +2561,7 @@ const translations: TranslationDeepObject<typeof en> = {
             testCrash: 'Testcrash',
             resetToOriginalState: 'Terugzetten naar oorspronkelijke staat',
             usingImportedState: 'Je gebruikt geïmporteerde status. Druk hier om deze te wissen.',
+            failingRequests: 'Alle verzoeken zijn ingesteld om te mislukken. Druk hier om dit uit te zetten.',
             debugMode: 'Debugmodus',
             invalidFile: 'Ongeldig bestand',
             invalidFileDescription: 'Het bestand dat u probeert te importeren is ongeldig. Probeer het opnieuw.',

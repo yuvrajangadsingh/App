@@ -336,6 +336,9 @@ const SENTRY_LABEL = {
     IMPORTED_STATE_INDICATOR: {
         RESET: 'ImportedStateIndicator-Reset',
     },
+    FAILING_REQUESTS_INDICATOR: {
+        TURN_OFF: 'FailingRequestsIndicator-TurnOff',
+    },
     MIGRATED_USER_WELCOME_MODAL: {
         HELP_BUTTON: 'MigratedUserWelcomeModal-HelpButton',
         CONFIRM_BUTTON: 'MigratedUserWelcomeModal-ConfirmButton',

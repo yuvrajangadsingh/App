@@ -2609,6 +2609,7 @@ const translations: TranslationDeepObject<typeof en> = {
             testCrash: 'Test awarii',
             resetToOriginalState: 'Przywróć stan początkowy',
             usingImportedState: 'Używasz zaimportowanego stanu. Naciśnij tutaj, aby go wyczyścić.',
+            failingRequests: 'Wszystkie żądania są ustawione tak, aby kończyły się błędem. Naciśnij tutaj, aby to wyłączyć.',
             debugMode: 'Tryb debugowania',
             invalidFile: 'Nieprawidłowy plik',
             invalidFileDescription: 'Plik, który próbujesz zaimportować, jest nieprawidłowy. Spróbuj ponownie.',

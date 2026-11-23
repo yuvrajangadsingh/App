@@ -2733,6 +2733,7 @@ const translations = {
             testCrash: 'Test crash',
             resetToOriginalState: 'Reset to original state',
             usingImportedState: 'You are using imported state. Press here to clear it.',
+            failingRequests: 'All requests are set to fail. Press here to turn this off.',
             debugMode: 'Debug mode',
             showBranchNameInTitle: 'Show branch name in browser title',
             betaOverrides: 'Beta overrides',
