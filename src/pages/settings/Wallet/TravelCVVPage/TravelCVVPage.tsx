@@ -11,11 +11,14 @@ import {useMemoizedLazyExpensifyIcons} from '@hooks/useLazyAsset';
 import useLocalize from '@hooks/useLocalize';
 import useNetwork from '@hooks/useNetwork';
 import useOnyx from '@hooks/useOnyx';
+import useRunAfterTransitions from '@hooks/useRunAfterTransitions';
 import useThemeStyles from '@hooks/useThemeStyles';
 import useThrottledButtonState from '@hooks/useThrottledButtonState';
 
 import Clipboard from '@libs/Clipboard';
 import Navigation from '@libs/Navigation/Navigation';
+import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
+import type {SettingsNavigatorParamList} from '@libs/Navigation/types';
 
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -33,7 +36,7 @@ import {useTravelCVVActions, useTravelCVVState} from './TravelCVVContextProvider
  * Shows a description of the travel card and allows users to reveal the CVV.
  * CVV is stored only in React Context state and never persisted in Onyx.
  */
-function TravelCVVPage() {
+function TravelCVVPage({route}: PlatformStackScreenProps<SettingsNavigatorParamList, typeof SCREENS.SETTINGS.WALLET.TRAVEL_CVV>) {
     const styles = useThemeStyles();
     const [isCopyButtonActive, setCopyButtonInactive] = useThrottledButtonState();
     const {isOffline} = useNetwork();
@@ -63,8 +66,14 @@ function TravelCVVPage() {
     // Auto-navigate to the validateCode screen on first mount so the user
     // doesn't have to click "Reveal Details" manually.
     const hasAutoNavigatedRef = useRef(false);
+    // Wait for the opening transition so the nested RHP state is registered before pushing Verify on top.
+    const isTransitionDone = useRunAfterTransitions(true);
     useEffect(() => {
-        if (hasAutoNavigatedRef.current) {
+        if (hasAutoNavigatedRef.current || !isTransitionDone) {
+            return;
+        }
+        if (route.params?.shouldSkipAutoNavigate === 'true') {
+            hasAutoNavigatedRef.current = true;
             return;
         }
         // If the verify-account (validateCode) screen is already in the navigation
@@ -94,7 +103,7 @@ function TravelCVVPage() {
         }
         hasAutoNavigatedRef.current = true;
         Navigation.navigate(ROUTES.SETTINGS_WALLET_TRAVEL_CVV_VERIFY_ACCOUNT);
-    }, [cvv, isSignedInAsDelegate, isOffline, isAccountLocked, isVerifyAccountInStack]);
+    }, [cvv, isSignedInAsDelegate, isOffline, isAccountLocked, isVerifyAccountInStack, isTransitionDone, route.params?.shouldSkipAutoNavigate]);
 
     const handleRevealDetailsPress = () => {
         if (isAccountLocked) {

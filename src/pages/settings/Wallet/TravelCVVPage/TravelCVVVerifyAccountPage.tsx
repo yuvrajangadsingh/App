@@ -34,7 +34,7 @@ function TravelCVVVerifyAccountPage() {
     const travelCard = getTravelBillingCard(cardList);
 
     const navigateBack = () => {
-        Navigation.goBack(ROUTES.SETTINGS_WALLET_TRAVEL_CVV);
+        Navigation.goBack(ROUTES.SETTINGS_WALLET_TRAVEL_CVV.getRoute(true), {compareParams: false});
     };
 
     const handleRevealCardDetails = (validateCode: string) => {

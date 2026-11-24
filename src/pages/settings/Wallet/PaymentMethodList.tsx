@@ -582,7 +582,7 @@ function PaymentMethodList({
                     iconStyles: styles.travelBillingIcon,
                     shouldShowRightIcon: true,
                     shouldShowThreeDotsMenu: false,
-                    onPress: () => Navigation.navigate(ROUTES.SETTINGS_WALLET_TRAVEL_CVV),
+                    onPress: () => Navigation.navigate(ROUTES.SETTINGS_WALLET_TRAVEL_CVV.getRoute()),
                 });
             }
 

@@ -301,7 +301,7 @@ const config: LinkingOptions<RootNavigatorParamList>['config'] = {
                             exact: true,
                         },
                         [SCREENS.SETTINGS.WALLET.TRAVEL_CVV]: {
-                            path: ROUTES.SETTINGS_WALLET_TRAVEL_CVV,
+                            path: ROUTES.SETTINGS_WALLET_TRAVEL_CVV.route,
                             exact: true,
                         },
                         [SCREENS.SETTINGS.WALLET.TRAVEL_CVV_VERIFY_ACCOUNT]: {
